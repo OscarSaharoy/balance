@@ -1,53 +1,33 @@
-#![allow(non_snake_case)]
+use leptos::prelude::*;
 
-use dioxus::prelude::*;
-use dioxus_logger::tracing::{info, Level};
+#[component]
+fn Space(height: &str) -> impl IntoView {
+    view! {
+        <span style:height=height />
+    }
+}
 
-#[derive(Clone, Routable, Debug, PartialEq)]
-enum Route {
-    #[route("/")]
-    Home {},
-    #[route("/blog/:id")]
-    Blog { id: i32 },
+#[component]
+fn Intro() -> impl IntoView {
+    view! {
+        <h1> balance </h1>
+        <space height="1rem" />
+        <p> What have you eaten today? </p>
+    }
+}
+
+#[component]
+fn App() -> impl IntoView {
+    view! {
+        <div style="min-width: 100vw; min-height: 100vh; padding: 2rem; display: grid; place-items: center;">
+            <main style="width: 100%; max-width: 50rem;">
+                <Intro />
+            </main>
+        </div>
+    }
 }
 
 fn main() {
-    // Init logger
-    dioxus_logger::init(Level::INFO).expect("failed to init logger");
-    info!("starting app");
-    launch(App);
-}
-
-fn App() -> Element {
-    rsx! {
-        Router::<Route> {}
-    }
-}
-
-#[component]
-fn Blog(id: i32) -> Element {
-    rsx! {
-        Link { to: Route::Home {}, "Go to counter" }
-        "Blog post {id}"
-    }
-}
-
-#[component]
-fn Home() -> Element {
-    let mut count = use_signal(|| 0);
-
-    rsx! {
-        Link {
-            to: Route::Blog {
-                id: count()
-            },
-            "Go to blogoof"
-        }
-        div {
-            h1 { "High-Five counter: {count}" }
-            button { onclick: move |_| count += 1, "Up high!" }
-            button { onclick: move |_| count -= 1, "Down low!" }
-            input { onclick: move |_| count *= count(), "Down low!" }
-        }
-    }
+    console_error_panic_hook::set_once();
+    leptos::mount::mount_to_body(App)
 }
