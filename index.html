@@ -4,36 +4,61 @@
 <head>
     <meta charset="UTF-8">
     <title> balance ⚖️  </title>
+    <link data-trunk rel="copy-dir" href="assets" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Parkinsans:wght@300..800&display=swap');
+
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+            font-family: "Parkinsans", sans-serif;
+            font-weight: 400;
+        }
+
+        :root {
+            --bg: black;
+            --fg: white;
+            --bg2: #111;
+        }
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg: white;
+                --fg: black;
+                --bg2: #fafafa;
+            }
+        }
+
+        body {
+            color: var(--fg);
+            background: var(--bg);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+        }
+
+        input {
+            appearance: none;
+            border: none;
+            border-bottom: 1px solid var(--fg);
+            background: transparent;
+            padding: 0.4rem 0.6rem;
+            border-radius: 0.25rem 0.25rem 0 0;
+            color: var(--fg);
+            min-width: 0;
+        }
+        input:hover {
+            background: var(--bg2);
+        }
+    </style>
 </head>
 
 <body>
 
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Parkinsans:wght@300..800&display=swap');
-
-    * {
-        padding: 0;
-        margin: 0;
-        box-sizing: border-box;
-        font-family: "Parkinsans", sans-serif;
-    }
-
-    body {
-        background: white;
-    }
-
-    input {
-        appearance: none;
-        border: none;
-        border-bottom: 1px solid black;
-        background: transparent;
-        padding: 0.4rem 0.6rem;
-        border-radius: 0.25rem 0.25rem 0 0;
-    }
-    input:hover {
-        background: #fafafa;
-    }
-</style>
+<div id="loading-placeholder" style="width: 100vw; min-height: 100vh; display: grid; place-items: center;"> 
+    <h1> balance ⚖️  </h1>
+</div>
 
 <!-- leptos injects here -->
 

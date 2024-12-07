@@ -1,8 +1,15 @@
 [package]
-name = "leptos-tutorial"
+name = "balance"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 console_error_panic_hook = "0.1.7"
+csv = "1.3.1"
 leptos = { version = "0.7.0", features = ["csr"] }
+reqwasm = "0.5.0"
+serde = { version = "1.0", features = ["derive"] }
+
+[[bin]]
+name = "csvtest"
+path = "src/csvtest.rs"
