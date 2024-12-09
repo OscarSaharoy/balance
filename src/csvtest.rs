@@ -1,22 +1,30 @@
-use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
+enum NutrientValue {
+    Code(String),
+    Value(f32),
+}
+
+#[derive(Debug)]
 struct Food {
-    a: String,
-    b: String,
-    c: String,
+    name: String,
+    nutrients: HashMap<String, NutrientValue>,
 }
 
 fn main() -> () {
-    let data = "a,b,c
-1,2,3
-4,5,6";
-    let mut rdr = csv::Reader::from_reader(data.as_bytes());
-    for result in rdr.deserialize::<Food>() {
-        if let Ok(record) = result {
-            println!("{record:?}");
-        } else {
-            println!("err");
+    let message: String = match std::fs::read_to_string(
+        "./assets/cofid.csv"
+    ) {
+        Ok(s) => s,
+        Err(g) => panic!("{}", g),
+    };
+    let nutrients = Vec::<Nutrient>::new();
+    let mut rdr = csv::Reader::from_reader(message.as_bytes());
+    for result in rdr.records() {
+        match result {
+            Ok(record) => println!("{record:?}"),
+            Err(g) => println!("{}", g),
         }
     }
 }
