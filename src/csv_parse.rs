@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-#[derive(Debug)]
-enum NutrientValue {
+#[derive(Debug, Clone)]
+pub enum NutrientValue {
     Code(String),
     Value(f32),
 }
 
-#[derive(Debug)]
-struct Nutrient {
+#[derive(Debug, Clone)]
+pub struct Nutrient {
     name: String,
     display_name: String,
     abbreviation: String,
@@ -16,8 +16,8 @@ struct Nutrient {
 }
 
 
-#[derive(Debug)]
-struct Food {
+#[derive(Debug, Clone)]
+pub struct Food {
     name: String,
     nutrients: HashMap<String, NutrientValue>,
 }
@@ -73,7 +73,7 @@ fn take_headers(reader: &mut csv::Reader<&[u8]>) -> Vec<Nutrient> {
     return nutrients;
 }
 
-fn get_foods(csv: String) -> Vec<Food> {
+pub fn get_foods(csv: String) -> Vec<Food> {
     let mut reader = csv::ReaderBuilder::new()
         .has_headers(false)
         .from_reader(csv.as_bytes());
@@ -93,11 +93,3 @@ fn get_foods(csv: String) -> Vec<Food> {
         .collect::<Vec<Food>>()
 }
 
-fn main() -> () {
-    let message: String = std::fs::read_to_string(
-        "./assets/cofid.csv"
-    ).expect("cofid.csv is error free");
-
-    let foods = get_foods(message);
-    println!("{foods:?}");
-}

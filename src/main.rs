@@ -1,32 +1,20 @@
 use leptos::prelude::*;
 use leptos::web_sys;
-use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize)]
-struct Food {
-    food_name: String,
-}
+mod csv_parse;
+use csv_parse::Food;
 
-async fn get_data() -> Result<String> {
+async fn get_data() -> Result<Vec<Food>> {
     let res = reqwasm::http::Request::get("/assets/cofid.csv").send().await?;
-    let data = res.text().await?;
-    parse_data(data.clone());
-    Ok(data)
+    let text = res.text().await?;
+    Ok(csv_parse::get_foods(text))
 }
 
-fn parse_data(data: String) -> Result<()> {
-    let mut rdr = csv::Reader::from_reader(data.as_bytes());
-    leptos::logging::log!("ok");
-    leptos::logging::log!("{data}");
-    for result in rdr.deserialize() {
-        let record: Food = result?;
-        leptos::logging::log!("{record:?}");
+fn get_response(foods: String, data: Option<Result<Vec<Food>>>) -> String {
+    if let None = data {
+        return "ok".to_string();
     }
-    leptos::logging::log!("9");
-    Ok(())
-}
 
-fn get_response(foods: String) -> String {
     "test".to_string() + &foods
 }
 
@@ -50,8 +38,6 @@ fn Foods() -> impl IntoView {
     let (foods, set_foods) = signal("".to_string());
     let data = LocalResource::new(move || get_data());
 
-    //leptos::logging::log!("{data}");
-
     view! {
         <input
             on:input:target=move |e| set_foods.set(e.target().value()) 
@@ -59,7 +45,7 @@ fn Foods() -> impl IntoView {
             placeholder="eg. Bread, Brazil Nuts, Strawberry Milkshake"
             style="font-size: 1rem;"
         />
-        <p> {move || get_response(foods.get())} </p>
+        <p> {move || get_response(foods.get(), data.get().as_deref().cloned())} </p>
     }
 }
 
