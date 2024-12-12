@@ -100,7 +100,14 @@ pub fn lookup_food(
 ) -> Option<&Food> {
     foods
         .iter()
-        .find(|&f| f.name.contains(&search))
+        .find(|&f| f.name.to_lowercase().contains(&search.to_lowercase()))
+}
+
+pub fn lookup_foods(
+    foods: &Vec<Food>, search: String
+) -> Vec<&Food> {
+    let searches = search.split(",").map(|s| s.trim().to_string());
+    searches.filter_map(|s| lookup_food(foods, s)).collect::<Vec<&Food>>()
 }
 
 #[cfg(test)]
@@ -122,7 +129,7 @@ mod tests {
     }
 
     #[test]
-    fn search_foods() -> () {
+    fn search_food() -> () {
         let csv = get_csv();
         let foods = get_foods(csv);
         let found_food = lookup_food(&foods, "Ackee".to_string())
@@ -132,5 +139,16 @@ mod tests {
             found_food.nutrients["vitamin_c_mg"],
             NutrientValue::Value(30.0)
         );
+    }
+
+    #[test]
+    fn search_foods() -> () {
+        let csv = get_csv();
+        let foods = get_foods(csv);
+        let found_foods = lookup_foods(&foods, "Ackee, Amla, Apples".to_string());
+        println!("{found_foods:?}");
+        assert_eq!(found_foods[0].name, "Ackee, canned, drained");
+        assert_eq!(found_foods[1].name, "Amla");
+        assert_eq!(found_foods[2].name, "Apples, cooking, baked with sugar, flesh only");
     }
 }
