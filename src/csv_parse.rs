@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum NutrientValue {
     Code(String),
     Value(f32),
@@ -44,7 +44,9 @@ fn make_food(
     }
 }
 
-fn take_headers(reader: &mut csv::Reader<&[u8]>) -> Vec<Nutrient> {
+fn get_nutrients(
+    reader: &mut csv::Reader<&[u8]>
+) -> Vec<Nutrient> {
     let mut nutrients = Vec::<Nutrient>::new();
     let mut headers: Vec<Vec<String>> = reader
         .records()
@@ -78,7 +80,7 @@ pub fn get_foods(csv: String) -> Vec<Food> {
         .has_headers(false)
         .from_reader(csv.as_bytes());
 
-    let nutrients = take_headers(&mut reader);
+    let nutrients = get_nutrients(&mut reader);
     let nutrient_names = nutrients
         .iter()
         .map(|n| n.name.clone())
@@ -93,3 +95,42 @@ pub fn get_foods(csv: String) -> Vec<Food> {
         .collect::<Vec<Food>>()
 }
 
+pub fn lookup_food(
+    foods: &Vec<Food>, search: String
+) -> Option<&Food> {
+    foods
+        .iter()
+        .find(|&f| f.name.contains(&search))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn get_csv() -> String {
+        std::fs::read_to_string(
+            "./assets/cofid.csv"
+        ).expect("cofid.csv is error free")
+    }
+
+    #[test]
+    fn csv_parses_ok() -> () {
+        let csv = get_csv();
+        let foods = get_foods(csv);
+        assert_eq!(foods.len(), 2887);
+        assert_eq!(foods[0].nutrients.len(), 59);
+    }
+
+    #[test]
+    fn search_foods() -> () {
+        let csv = get_csv();
+        let foods = get_foods(csv);
+        let found_food = lookup_food(&foods, "Ackee".to_string())
+            .expect("should find a food");
+        assert_eq!(found_food.name, "Ackee, canned, drained");
+        assert_eq!(
+            found_food.nutrients["vitamin_c_mg"],
+            NutrientValue::Value(30.0)
+        );
+    }
+}

@@ -5,12 +5,15 @@ mod csv_parse;
 use csv_parse::Food;
 
 async fn get_data() -> Result<Vec<Food>> {
-    let res = reqwasm::http::Request::get("/assets/cofid.csv").send().await?;
+    let res = reqwasm::http::Request::get("/assets/cofid.csv")
+        .send().await?;
     let text = res.text().await?;
     Ok(csv_parse::get_foods(text))
 }
 
-fn get_response(foods: String, data: Option<Result<Vec<Food>>>) -> String {
+fn get_response(
+    foods: String, data: Option<Result<Vec<Food>>>
+) -> String {
     if let None = data {
         return "ok".to_string();
     }
