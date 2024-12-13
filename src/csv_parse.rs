@@ -95,43 +95,64 @@ pub fn get_foods(csv: String) -> Vec<Food> {
         .collect::<Vec<Food>>()
 }
 
-pub fn lookup_food(
-    foods: &Vec<Food>, search: String
-) -> Option<&Food> {
-    foods
-        .iter()
-        .find(|&f| f.name.to_lowercase().contains(&search.to_lowercase()))
+fn match_score(food: &Food, search_words: &Vec<String>) -> usize {
+    search_words
+        .into_iter()
+        .fold(0, |a, s| 
+            a + (food.name.to_lowercase().contains(s) as usize)
+        ) * 1000 + 1000 / food.name.len()
 }
 
-pub fn lookup_foods(
+fn lookup_food(
+    foods: &Vec<Food>, search: String
+) -> Option<&Food> {
+    let search_words = search
+        .split(" ")
+        .map(|s| s.trim().to_lowercase())
+        .collect::<Vec<String>>();
+    foods
+        .iter()
+        .max_by_key(|f| match_score(f, &search_words))
+}
+
+fn lookup_foods(
     foods: &Vec<Food>, search: String
 ) -> Vec<&Food> {
-    let searches = search.split(",").map(|s| s.trim().to_string());
-    searches.filter_map(|s| lookup_food(foods, s)).collect::<Vec<&Food>>()
+    let searches = search
+        .split(",")
+        .map(|s| s.trim().to_string());
+    searches
+        .filter_map(|s| lookup_food(foods, s))
+        .collect::<Vec<&Food>>()
 }
+
+/*
+fn sum_nutrients(foods: Vec<Food>)
+    -> HashMap<String, NutrientValue> {
+}
+*/
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn get_csv() -> String {
-        std::fs::read_to_string(
+    fn get_foods() -> Vec<Food> {
+        let csv = std::fs::read_to_string(
             "./assets/cofid.csv"
-        ).expect("cofid.csv is error free")
+        ).expect("cofid.csv is error free");
+        super::get_foods(csv)
     }
 
     #[test]
     fn csv_parses_ok() -> () {
-        let csv = get_csv();
-        let foods = get_foods(csv);
+        let foods = get_foods();
         assert_eq!(foods.len(), 2887);
         assert_eq!(foods[0].nutrients.len(), 59);
     }
 
     #[test]
     fn search_food() -> () {
-        let csv = get_csv();
-        let foods = get_foods(csv);
+        let foods = get_foods();
         let found_food = lookup_food(&foods, "Ackee".to_string())
             .expect("should find a food");
         assert_eq!(found_food.name, "Ackee, canned, drained");
@@ -142,13 +163,49 @@ mod tests {
     }
 
     #[test]
+    fn search_food_multi_word() -> () {
+        let foods = get_foods();
+        let found_food = lookup_food(
+            &foods,
+            "Yorkshire pudding milk".to_string()
+        ).expect("should find a food");
+        assert_eq!(
+            found_food.name,
+            "Yorkshire pudding, made with whole milk"
+        );
+        let found_food2 = lookup_food(
+            &foods,
+            "apple baked sugar".to_string()
+        ).expect("should find a food");
+        assert_eq!(
+            found_food2.name,
+            "Apples, cooking, baked with sugar, flesh only"
+        );
+    }
+
+    #[test]
     fn search_foods() -> () {
-        let csv = get_csv();
-        let foods = get_foods(csv);
-        let found_foods = lookup_foods(&foods, "Ackee, Amla, Apples".to_string());
-        println!("{found_foods:?}");
+        let foods = get_foods();
+        let found_foods = lookup_foods(
+            &foods,
+            "Ackee, Amla, Apples".to_string()
+        );
         assert_eq!(found_foods[0].name, "Ackee, canned, drained");
         assert_eq!(found_foods[1].name, "Amla");
-        assert_eq!(found_foods[2].name, "Apples, cooking, baked with sugar, flesh only");
+        assert_eq!(found_foods[2].name, "Apples, eating, dried");
+
+        let found_foods2 = lookup_foods(
+            &foods,
+            "Ackee, Amla, baked apple".to_string()
+        );
+        assert_eq!(found_foods2[0].name, "Ackee, canned, drained");
+        assert_eq!(found_foods2[1].name, "Amla");
+        assert_eq!(
+            found_foods2[2].name,
+            "Apples, cooking, baked with sugar, flesh only"
+        );
+    }
+
+    fn search_foods_no_match() -> () {
     }
 }
