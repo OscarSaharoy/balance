@@ -195,10 +195,8 @@ fn balance_score(
         .iter()
         .fold(0, |a, (s, _)|
             a + match (&ideal_nutrients[s], &food.nutrients[s]) {
-                (NutrientValue::Code(_), NutrientValue::Code(_))
-                    => 1000,
-                (NutrientValue::Value(_), NutrientValue::Code(_))
-                    => 1000,
+                (_, NutrientValue::Code(_))
+                    => 400,
                 (NutrientValue::Value(x), NutrientValue::Value(y))
                     => std::cmp::min(
                         (1000. * y / x) as usize,
@@ -244,7 +242,7 @@ mod tests {
     #[test]
     fn csv_parses_ok() -> () {
         let (_nutrients, foods) = get_foods();
-        assert_eq!(foods.len(), 1919);
+        assert_eq!(foods.len(), 1554);
         assert_eq!(foods[0].nutrients.len(), 59);
     }
 
@@ -265,11 +263,11 @@ mod tests {
         let (_nutrients, foods) = get_foods();
         let found_food = lookup_food(
             &foods,
-            "Yorkshire pudding milk".to_string()
+            "rice pudding".to_string()
         ).expect("should find a food");
         assert_eq!(
             found_food.name,
-            "Yorkshire pudding, made with whole milk"
+            "Pudding, rice, canned"
         );
         let found_food2 = lookup_food(
             &foods,
@@ -425,15 +423,15 @@ mod tests {
         );
         assert_eq!(
             recommended_foods[0].name,
-            "Milk drink, fermented, with probiotics"
+            "Breakfast cereal, bran type cereal, fortified"
         );
         assert_eq!(
             recommended_foods[1].name,
-            "Strudel, fruit filled, retail, frozen"
+            "Jaffa cakes"
         );
         assert_eq!(
             recommended_foods[2].name,
-            "Breakfast cereal, bran type cereal, fortified"
+            "Gateau, fruit, frozen"
         );
     }
 }
