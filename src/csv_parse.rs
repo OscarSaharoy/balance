@@ -6,11 +6,11 @@ pub enum NutrientValue {
     Value(f32),
 }
 
-impl<'a> std::ops::Add<&'a NutrientValue> for NutrientValue {
+impl<'a, 'b> std::ops::Add<&'a NutrientValue> for &'b NutrientValue {
     type Output = NutrientValue;
     fn add(self, other: &'a NutrientValue) -> NutrientValue {
         if let NutrientValue::Code(s) = self {
-            NutrientValue::Code(s)
+            NutrientValue::Code(s.to_string())
         }
         else if let NutrientValue::Code(s) = other {
             NutrientValue::Code(s.to_string())
@@ -24,13 +24,31 @@ impl<'a> std::ops::Add<&'a NutrientValue> for NutrientValue {
     }
 }
 
+impl<'a, 'b> std::ops::Sub<&'a NutrientValue> for &'b NutrientValue {
+    type Output = NutrientValue;
+    fn sub(self, other: &'a NutrientValue) -> NutrientValue {
+        if let NutrientValue::Code(s) = other {
+            NutrientValue::Value(0.)
+        }
+        else if let NutrientValue::Code(s) = self {
+            NutrientValue::Code(s.to_string())
+        }
+        else if let (NutrientValue::Value(v1), NutrientValue::Value(v2)) = (self, other) {
+            NutrientValue::Value(v1 - v2)
+        }
+        else {
+            NutrientValue::Value(0.0)
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Nutrient {
     name: String,
     display_name: String,
     abbreviation: String,
     units: String,
-    recommended_intake: f32,
+    recommended_intake: NutrientValue,
 }
 
 
@@ -77,10 +95,13 @@ fn get_nutrients(
         )
         .collect();
     for _ in 0..headers[0].len() {
-        let recommended_intake: f32 = headers[4]
+        let recommended_intake: NutrientValue = headers[4]
             .remove(0)
             .parse()
-            .map_or(0., |s| s);
+            .map_or(
+                NutrientValue::Value(0.),
+                |s| NutrientValue::Value(s)
+            );
         let new_nutrient = Nutrient {
             name: headers[0].remove(0),
             display_name: headers[3].remove(0),
@@ -158,23 +179,34 @@ fn sum_nutrients(
                 .iter()
                 .fold(
                     NutrientValue::Value(0.), 
-                    |a, f| a + &f.nutrients[&n.name],
+                    |a, f| &a + &f.nutrients[&n.name],
                 )
             )
         )
         .collect::<HashMap<String, NutrientValue>>()
 }
 
-/*
-fn get_balance(
-    nutrients_sum: &HashMap<String, NutrientValue>,
+fn recommend_foods(
+    nutrients: &Vec<Nutrient>,
     foods: &Vec<Food>,
-) -> Vec<&Food> {
-    foods
+    nutrients_sum: &HashMap<String, NutrientValue>,
+) -> Vec<Food> {
+    let ideal_nutrients = nutrients
         .iter()
-        .
+        .map(|n| (
+            n.name.clone(), 
+            &n.recommended_intake - &nutrients_sum[&n.name],
+        ))
+        .collect::<HashMap<String, NutrientValue>>();
+    let mut sortedFoods = foods.clone();
+    sortedFoods
+        .sort_by_key(|f| 1);
+    sortedFoods
+        .into_iter()
+        .rev()
+        .take(3)
+        .collect::<Vec<Food>>()
 }
-*/
 
 #[cfg(test)]
 mod tests {
@@ -275,29 +307,60 @@ mod tests {
         let nv1 = NutrientValue::Code("N".to_string());
         let nv2 = NutrientValue::Code("N".to_string());
         assert_eq!(
-            nv1 + &nv2,
+            &nv1 + &nv2,
             NutrientValue::Code("N".to_string())
         );
 
         let nv3 = NutrientValue::Code("N".to_string());
         let nv4 = NutrientValue::Value(76.5);
         assert_eq!(
-            nv3 + &nv4,
+            &nv3 + &nv4,
             NutrientValue::Code("N".to_string())
         );
 
         let nv5 = NutrientValue::Value(76.5);
         let nv6 = NutrientValue::Code("N".to_string());
         assert_eq!(
-            nv5 + &nv6,
+            &nv5 + &nv6,
             NutrientValue::Code("N".to_string())
         );
 
         let nv5 = NutrientValue::Value(76.5);
         let nv6 = NutrientValue::Value(20.);
         assert_eq!(
-            nv5 + &nv6,
+            &nv5 + &nv6,
             NutrientValue::Value(96.5)
+        );
+    }
+
+    #[test]
+    fn sub_nutrient_values() -> () {
+        let nv1 = NutrientValue::Code("N".to_string());
+        let nv2 = NutrientValue::Code("N".to_string());
+        assert_eq!(
+            &nv1 - &nv2,
+            NutrientValue::Value(0.)
+        );
+
+        let nv3 = NutrientValue::Code("N".to_string());
+        let nv4 = NutrientValue::Value(76.5);
+        assert_eq!(
+            &nv3 - &nv4,
+            NutrientValue::Code("N".to_string())
+        );
+
+        let nv5 = NutrientValue::Value(76.5);
+        let nv6 = NutrientValue::Code("N".to_string());
+        assert_eq!(
+            &nv5 - &nv6,
+            NutrientValue::Value(0.)
+        );
+
+        let nv5 = NutrientValue::Value(76.5);
+        let nv6 = NutrientValue::Value(20.);
+        assert_eq!(
+            &nv5 - &nv6,
+            NutrientValue::Value(56.5)
         );
     }
 
@@ -319,6 +382,24 @@ mod tests {
         assert_eq!(
             nutrients_sum["vitamin_b12_ug"],
             NutrientValue::Value(0.)
+        );
+    }
+
+    #[test]
+    fn recommend() -> () {
+        let (nutrients, foods) = get_foods();
+        let found_foods = lookup_foods(
+            &foods,
+            "Ackee, Amla, Apples".to_string()
+        );
+        let nutrients_sum = super::sum_nutrients(
+            &nutrients,
+            &found_foods
+        );
+        let recommended_foods = recommend_foods(
+            &nutrients,
+            &foods,
+            &nutrients_sum
         );
     }
 }
