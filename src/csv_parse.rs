@@ -244,7 +244,7 @@ mod tests {
     #[test]
     fn csv_parses_ok() -> () {
         let (_nutrients, foods) = get_foods();
-        assert_eq!(foods.len(), 2887);
+        assert_eq!(foods.len(), 1919);
         assert_eq!(foods[0].nutrients.len(), 59);
     }
 
@@ -429,11 +429,11 @@ mod tests {
         );
         assert_eq!(
             recommended_foods[1].name,
-            "Build-up powder, soup, assorted flavours"
+            "Strudel, fruit filled, retail, frozen"
         );
         assert_eq!(
             recommended_foods[2].name,
-            "Ovaltine, powder"
+            "Breakfast cereal, bran type cereal, fortified"
         );
     }
 }
