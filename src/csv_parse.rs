@@ -112,6 +112,7 @@ fn lookup_food(
         .collect::<Vec<String>>();
     foods
         .iter()
+        .filter(|f| match_score(f, &search_words) > 1000)
         .max_by_key(|f| match_score(f, &search_words))
 }
 
@@ -206,6 +207,23 @@ mod tests {
         );
     }
 
-    fn search_foods_no_match() -> () {
+    #[test]
+    fn search_foods_without_match() -> () {
+        let foods = get_foods();
+        let lookup_result = lookup_food(
+            &foods,
+            "glorb".to_string()
+        );
+        assert!(lookup_result.is_none());
+
+        let found_foods = lookup_foods(
+            &foods,
+            "Ackee, glorb, baked apple".to_string()
+        );
+        assert_eq!(found_foods[0].name, "Ackee, canned, drained");
+        assert_eq!(
+            found_foods[1].name,
+            "Apples, cooking, baked with sugar, flesh only"
+        );
     }
 }
