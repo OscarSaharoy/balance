@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use itertools::Itertools;
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum NutrientValue {
@@ -27,7 +29,7 @@ impl<'a, 'b> std::ops::Add<&'a NutrientValue> for &'b NutrientValue {
 impl<'a, 'b> std::ops::Sub<&'a NutrientValue> for &'b NutrientValue {
     type Output = NutrientValue;
     fn sub(self, other: &'a NutrientValue) -> NutrientValue {
-        if let NutrientValue::Code(s) = other {
+        if let NutrientValue::Code(_) = other {
             NutrientValue::Value(0.)
         }
         else if let NutrientValue::Code(s) = self {
@@ -186,11 +188,32 @@ fn sum_nutrients(
         .collect::<HashMap<String, NutrientValue>>()
 }
 
-fn recommend_foods(
+fn balance_score(
+    food: &Food, ideal_nutrients: &HashMap<String, NutrientValue>
+) -> usize {
+    ideal_nutrients
+        .iter()
+        .fold(0, |a, (s, _)|
+            a + match (&ideal_nutrients[s], &food.nutrients[s]) {
+                (NutrientValue::Code(_), NutrientValue::Code(_))
+                    => 1000,
+                (NutrientValue::Value(_), NutrientValue::Code(_))
+                    => 1000,
+                (NutrientValue::Value(x), NutrientValue::Value(y))
+                    => std::cmp::min(
+                        (1000. * y / x) as usize,
+                        1000
+                    ),
+                _ => 0,
+            }
+        )
+}
+
+fn recommend_foods<'a>(
     nutrients: &Vec<Nutrient>,
-    foods: &Vec<Food>,
+    foods: &'a Vec<Food>,
     nutrients_sum: &HashMap<String, NutrientValue>,
-) -> Vec<Food> {
+) -> Vec<&'a Food> {
     let ideal_nutrients = nutrients
         .iter()
         .map(|n| (
@@ -198,14 +221,13 @@ fn recommend_foods(
             &n.recommended_intake - &nutrients_sum[&n.name],
         ))
         .collect::<HashMap<String, NutrientValue>>();
-    let mut sortedFoods = foods.clone();
-    sortedFoods
-        .sort_by_key(|f| 1);
-    sortedFoods
-        .into_iter()
-        .rev()
-        .take(3)
-        .collect::<Vec<Food>>()
+    foods
+        .iter()
+        .k_largest_by_key(
+            3,
+            |f| balance_score(&f, &ideal_nutrients)
+        )
+        .collect::<Vec<&Food>>()
 }
 
 #[cfg(test)]
@@ -400,6 +422,18 @@ mod tests {
             &nutrients,
             &foods,
             &nutrients_sum
+        );
+        assert_eq!(
+            recommended_foods[0].name,
+            "Milk drink, fermented, with probiotics"
+        );
+        assert_eq!(
+            recommended_foods[1].name,
+            "Build-up powder, soup, assorted flavours"
+        );
+        assert_eq!(
+            recommended_foods[2].name,
+            "Ovaltine, powder"
         );
     }
 }
