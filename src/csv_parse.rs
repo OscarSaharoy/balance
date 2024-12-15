@@ -26,7 +26,10 @@ fn make_food(
         .get(0)
         .expect("each row has at least 1 record")
         .to_owned();
-    let nutrient_values = std::iter::zip(nutrients, &record)
+    let nutrient_values = std::iter::zip(
+        nutrients.iter(),
+        record.iter().skip(1)
+    )
         .map(|(n,x)| match x.parse::<f32>() {
             Ok(f) => (
                 n.name.to_string(),
@@ -54,6 +57,7 @@ fn get_nutrients(
         .map(|r| r
             .expect("cofid.csv is error free")
             .into_iter()
+            .skip(1)
             .map(|s| s.to_owned())
             .collect()
         )
@@ -202,7 +206,7 @@ mod tests {
     fn csv_parses_ok() -> () {
         let (_nutrients, foods) = get_foods();
         assert_eq!(foods.len(), 1554);
-        assert_eq!(foods[0].nutrients.len(), 59);
+        assert_eq!(foods[0].nutrients.len(), 58);
     }
 
     #[test]
