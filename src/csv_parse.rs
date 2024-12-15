@@ -185,6 +185,8 @@ fn recommend_foods<'a>(
         .collect::<Vec<&Food>>()
 }
 
+fn main() -> () {}
+
 #[cfg(test)]
 mod tests {
     use super::*;

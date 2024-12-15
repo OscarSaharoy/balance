@@ -2,17 +2,18 @@ use leptos::prelude::*;
 use leptos::web_sys;
 
 mod csv_parse;
-use csv_parse::Food;
+use csv_parse::{Food, Nutrient, get_foods};
 
-async fn get_data() -> Result<Vec<Food>> {
+async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
     let res = reqwasm::http::Request::get("/assets/cofid.csv")
         .send().await?;
     let text = res.text().await?;
-    Ok(csv_parse::get_foods(text))
+    let (nutrients, foods) = get_foods(text);
+    Ok((nutrients, foods))
 }
 
 fn get_response(
-    foods: String, data: Option<Result<Vec<Food>>>
+    foods: String, data: Option<Result<(Vec<Nutrient>, Vec<Food>)>>
 ) -> String {
     if let None = data {
         return "ok".to_string();
