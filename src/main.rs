@@ -62,8 +62,9 @@ fn Intro() -> impl IntoView {
 #[component]
 fn Foods() -> impl IntoView {
     let (foods, set_foods) = signal("".to_string());
-    let foods_debounced: Signal<String> = signal_debounced(foods, 1000.0);
+    let foods_debounced: Signal<String> = signal_debounced(foods, 500.0);
     let data = LocalResource::new(move || get_data());
+    let generating = move || foods_debounced.get() != foods.get();
 
     view! {
         <input
@@ -72,7 +73,10 @@ fn Foods() -> impl IntoView {
             placeholder="eg. Bread, Brazil Nuts, Strawberry Milkshake"
             style="font-size: 1rem;"
         />
-        <p> {move || get_response(foods_debounced.get(), data.get().as_deref().cloned())} </p>
+        <p style:display=move || if generating() { "block" } else { "none" }> "Generating 🤔" </p>
+        <p style:opacity=move || if generating() { "0.5" } else { "1" }>
+            { move || get_response(foods_debounced.get(), data.get().as_deref().cloned()) }
+        </p>
     }
 }
 
@@ -80,11 +84,17 @@ fn Foods() -> impl IntoView {
 #[component]
 fn App() -> impl IntoView {
     view! {
-        <div id="leptos-root" style="min-width: 100vw; min-height: 100vh; padding: 2rem; display: grid; place-items: center;">
+        <div id="leptos-root" style="min-width: 100vw; min-height: 100vh; padding: 2rem; display: grid; place-items: center; grid-template-rows: auto max-content;">
             <main style="width: 100%; max-width: 40rem; display: grid; gap: 1rem;">
                 <Intro />
                 <Foods />
             </main>
+            <footer style="display: grid; grid-auto-flow: column; align-items: center; gap: .7rem; justify-self: start; align-self: end;">
+                <a href="https://github.com/OscarSaharoy/balance" style="display: grid;" target="_blank" rel="noopener noreferrer">
+                    <img src="/assets/github.svg" style="height: 1.5rem;" class="invert" />
+                </a>
+                <p style="font-size: 0.8rem;"> "Made by Oscar Saharoy. Don't rely on this for good nutrition advice!" </p>
+            </footer>
         </div>
     }
 }
