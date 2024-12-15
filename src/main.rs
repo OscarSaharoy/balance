@@ -37,11 +37,11 @@ fn get_response(
         &foods,
         &nutrients_sum
     );
-    recommended_foods
+    let recommended_names = recommended_foods
         .iter()
         .map(|f| f.name.to_string())
-        .intersperse(", ".to_string())
-        .collect::<String>()
+        .collect::<Vec<String>>();
+    format!("Sounds delicious 😋 Try eating some of these foods to balance your diet:\n\n{}\n{}\n{}", recommended_names[0], recommended_names[1], recommended_names[2])
 }
 
 #[component]
@@ -74,7 +74,10 @@ fn Foods() -> impl IntoView {
             style="font-size: 1rem;"
         />
         <p style:display=move || if generating() { "block" } else { "none" }> "Generating 🤔" </p>
-        <p style:opacity=move || if generating() { "0.5" } else { "1" }>
+        <p
+            style:opacity=move || if generating() { "0.5" } else { "1" }
+            style="white-space: pre-wrap;"
+        >
             { move || get_response(foods_debounced.get(), data.get().as_deref().cloned()) }
         </p>
     }
