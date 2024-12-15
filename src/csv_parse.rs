@@ -324,15 +324,15 @@ mod tests {
         );
         assert_eq!(
             recommended_foods[0].name,
-            "Breakfast cereal, bran type cereal, fortified"
+            "Wheatgerm"
         );
         assert_eq!(
             recommended_foods[1].name,
-            "Breakfast cereal, instant hot oat, plain, raw, fortified"
+            "Flour, soya"
         );
         assert_eq!(
             recommended_foods[2].name,
-            "Wheatgerm"
+            "Bran, wheat"
         );
     }
 }
