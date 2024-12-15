@@ -2,83 +2,45 @@ use std::collections::HashMap;
 use itertools::Itertools;
 
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum NutrientValue {
-    Code(String),
-    Value(f32),
-}
-
-impl<'a, 'b> std::ops::Add<&'a NutrientValue> for &'b NutrientValue {
-    type Output = NutrientValue;
-    fn add(self, other: &'a NutrientValue) -> NutrientValue {
-        if let NutrientValue::Code(s) = self {
-            NutrientValue::Code(s.to_string())
-        }
-        else if let NutrientValue::Code(s) = other {
-            NutrientValue::Code(s.to_string())
-        }
-        else if let (NutrientValue::Value(v1), NutrientValue::Value(v2)) = (self, other) {
-            NutrientValue::Value(v1 + v2)
-        }
-        else {
-            NutrientValue::Value(0.0)
-        }
-    }
-}
-
-impl<'a, 'b> std::ops::Sub<&'a NutrientValue> for &'b NutrientValue {
-    type Output = NutrientValue;
-    fn sub(self, other: &'a NutrientValue) -> NutrientValue {
-        if let NutrientValue::Code(_) = other {
-            NutrientValue::Value(0.)
-        }
-        else if let NutrientValue::Code(s) = self {
-            NutrientValue::Code(s.to_string())
-        }
-        else if let (NutrientValue::Value(v1), NutrientValue::Value(v2)) = (self, other) {
-            NutrientValue::Value(v1 - v2)
-        }
-        else {
-            NutrientValue::Value(0.0)
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Nutrient {
     name: String,
     display_name: String,
     abbreviation: String,
     units: String,
-    recommended_intake: NutrientValue,
+    recommended_intake: f32,
 }
 
 
 #[derive(Debug, Clone)]
 pub struct Food {
     name: String,
-    nutrients: HashMap<String, NutrientValue>,
+    nutrients: HashMap<String, f32>,
 }
 
 fn make_food(
     record: csv::StringRecord,
-    mut nutrient_names: Vec<String>,
+    nutrients: &Vec<Nutrient>,
 ) -> Food {
     let name = record
         .get(0)
         .expect("each row has at least 1 record")
         .to_owned();
-    let values = record
-        .iter()
-        .map(|x| match x.parse::<f32>() {
-            Ok(f) => NutrientValue::Value(f),
-            Err(_) => NutrientValue::Code(x.to_owned()),
-        });
+    let nutrient_values = std::iter::zip(nutrients, &record)
+        .map(|(n,x)| match x.parse::<f32>() {
+            Ok(f) => (
+                n.name.to_string(),
+                f,
+            ),
+            Err(_) => (
+                n.name.to_string(),
+                n.recommended_intake / 5.,
+            ),
+        })
+        .collect::<HashMap<String, f32>>();
     Food {
         name: name,
-        nutrients: values
-            .map(|x| (nutrient_names.remove(0), x))
-            .collect::<HashMap<String, NutrientValue>>(),
+        nutrients: nutrient_values,
     }
 }
 
@@ -97,12 +59,12 @@ fn get_nutrients(
         )
         .collect();
     for _ in 0..headers[0].len() {
-        let recommended_intake: NutrientValue = headers[4]
+        let recommended_intake: f32 = headers[4]
             .remove(0)
             .parse()
             .map_or(
-                NutrientValue::Value(0.),
-                |s| NutrientValue::Value(s)
+                0.,
+                |s| s
             );
         let new_nutrient = Nutrient {
             name: headers[0].remove(0),
@@ -122,16 +84,11 @@ pub fn get_foods(csv: String) -> (Vec<Nutrient>, Vec<Food>) {
         .from_reader(csv.as_bytes());
 
     let nutrients = get_nutrients(&mut reader);
-    let nutrient_names = nutrients
-        .iter()
-        .map(|n| n.name.clone())
-        .collect::<Vec<String>>();
-
     let foods = reader
         .records()
         .map(|r| make_food(
             r.expect("cofid.csv is error free"),
-            nutrient_names.clone(),
+            &nutrients,
         ))
         .collect::<Vec<Food>>();
 
@@ -153,10 +110,15 @@ fn lookup_food(
         .split(" ")
         .map(|s| s.trim().to_lowercase())
         .collect::<Vec<String>>();
-    foods
+    let best_match = foods
         .iter()
-        .filter(|f| match_score(f, &search_words) > 1000)
         .max_by_key(|f| match_score(f, &search_words))
+        .expect("foods is nonempty");
+    if match_score(best_match, &search_words) > 1000 {
+        Some(best_match)
+    } else {
+        None
+    }
 }
 
 fn lookup_foods(
@@ -172,7 +134,7 @@ fn lookup_foods(
 
 fn sum_nutrients(
     nutrients: &Vec<Nutrient>, foods: &Vec<&Food>
-) -> HashMap<String, NutrientValue> {
+) -> HashMap<String, f32> {
     nutrients
         .iter()
         .map(|n| (
@@ -180,45 +142,40 @@ fn sum_nutrients(
             foods
                 .iter()
                 .fold(
-                    NutrientValue::Value(0.), 
-                    |a, f| &a + &f.nutrients[&n.name],
+                    0., 
+                    |a, f| a + f.nutrients[&n.name],
                 )
             )
         )
-        .collect::<HashMap<String, NutrientValue>>()
+        .collect::<HashMap<String, f32>>()
 }
 
 fn balance_score(
-    food: &Food, ideal_nutrients: &HashMap<String, NutrientValue>
+    food: &Food, ideal_nutrients: &HashMap<String, f32>
 ) -> usize {
     ideal_nutrients
         .iter()
         .fold(0, |a, (s, _)|
-            a + match (&ideal_nutrients[s], &food.nutrients[s]) {
-                (_, NutrientValue::Code(_))
-                    => 400,
-                (NutrientValue::Value(x), NutrientValue::Value(y))
-                    => std::cmp::min(
-                        (1000. * y / x) as usize,
-                        1000
-                    ),
-                _ => 0,
-            }
+            a + std::cmp::min(
+                (1000. * food.nutrients[s] / ideal_nutrients[s])
+                    as usize,
+                1000
+            ),
         )
 }
 
 fn recommend_foods<'a>(
     nutrients: &Vec<Nutrient>,
     foods: &'a Vec<Food>,
-    nutrients_sum: &HashMap<String, NutrientValue>,
+    nutrients_sum: &HashMap<String, f32>,
 ) -> Vec<&'a Food> {
     let ideal_nutrients = nutrients
         .iter()
         .map(|n| (
             n.name.clone(), 
-            &n.recommended_intake - &nutrients_sum[&n.name],
+            n.recommended_intake - nutrients_sum[&n.name],
         ))
-        .collect::<HashMap<String, NutrientValue>>();
+        .collect::<HashMap<String, f32>>();
     foods
         .iter()
         .k_largest_by_key(
@@ -252,10 +209,7 @@ mod tests {
         let found_food = lookup_food(&foods, "Ackee".to_string())
             .expect("should find a food");
         assert_eq!(found_food.name, "Ackee, canned, drained");
-        assert_eq!(
-            found_food.nutrients["vitamin_c_mg"],
-            NutrientValue::Value(30.0)
-        );
+        assert_eq!(found_food.nutrients["vitamin_c_mg"], 30.0);
     }
 
     #[test]
@@ -323,68 +277,6 @@ mod tests {
     }
 
     #[test]
-    fn add_nutrient_values() -> () {
-        let nv1 = NutrientValue::Code("N".to_string());
-        let nv2 = NutrientValue::Code("N".to_string());
-        assert_eq!(
-            &nv1 + &nv2,
-            NutrientValue::Code("N".to_string())
-        );
-
-        let nv3 = NutrientValue::Code("N".to_string());
-        let nv4 = NutrientValue::Value(76.5);
-        assert_eq!(
-            &nv3 + &nv4,
-            NutrientValue::Code("N".to_string())
-        );
-
-        let nv5 = NutrientValue::Value(76.5);
-        let nv6 = NutrientValue::Code("N".to_string());
-        assert_eq!(
-            &nv5 + &nv6,
-            NutrientValue::Code("N".to_string())
-        );
-
-        let nv5 = NutrientValue::Value(76.5);
-        let nv6 = NutrientValue::Value(20.);
-        assert_eq!(
-            &nv5 + &nv6,
-            NutrientValue::Value(96.5)
-        );
-    }
-
-    #[test]
-    fn sub_nutrient_values() -> () {
-        let nv1 = NutrientValue::Code("N".to_string());
-        let nv2 = NutrientValue::Code("N".to_string());
-        assert_eq!(
-            &nv1 - &nv2,
-            NutrientValue::Value(0.)
-        );
-
-        let nv3 = NutrientValue::Code("N".to_string());
-        let nv4 = NutrientValue::Value(76.5);
-        assert_eq!(
-            &nv3 - &nv4,
-            NutrientValue::Code("N".to_string())
-        );
-
-        let nv5 = NutrientValue::Value(76.5);
-        let nv6 = NutrientValue::Code("N".to_string());
-        assert_eq!(
-            &nv5 - &nv6,
-            NutrientValue::Value(0.)
-        );
-
-        let nv5 = NutrientValue::Value(76.5);
-        let nv6 = NutrientValue::Value(20.);
-        assert_eq!(
-            &nv5 - &nv6,
-            NutrientValue::Value(56.5)
-        );
-    }
-
-    #[test]
     fn sum_nutrients() -> () {
         let (nutrients, foods) = get_foods();
         let found_foods = lookup_foods(
@@ -395,14 +287,8 @@ mod tests {
             &nutrients,
             &found_foods
         );
-        assert_eq!(
-            nutrients_sum["vitamin_c_mg"],
-            NutrientValue::Code("N".to_string())
-        );
-        assert_eq!(
-            nutrients_sum["vitamin_b12_ug"],
-            NutrientValue::Value(0.)
-        );
+        assert_eq!(nutrients_sum["vitamin_c_mg"], 38.);
+        assert_eq!(nutrients_sum["vitamin_b12_ug"], 0.);
     }
 
     #[test]
@@ -427,11 +313,11 @@ mod tests {
         );
         assert_eq!(
             recommended_foods[1].name,
-            "Jaffa cakes"
+            "Breakfast cereal, instant hot oat, plain, raw, fortified"
         );
         assert_eq!(
             recommended_foods[2].name,
-            "Gateau, fruit, frozen"
+            "Wheatgerm"
         );
     }
 }
