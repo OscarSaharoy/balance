@@ -15,6 +15,7 @@ pub struct Nutrient {
 #[derive(Debug, Clone)]
 pub struct Food {
     pub name: String,
+    recommend: bool,
     nutrients: HashMap<String, f32>,
 }
 
@@ -26,9 +27,15 @@ fn make_food(
         .get(0)
         .expect("each row has at least 1 record")
         .to_owned();
+    let recommend = match record
+        .get(1)
+        .expect("each row has at least 2 records") {
+        "TRUE" => true,
+        _ => false,
+    };
     let nutrient_values = std::iter::zip(
         nutrients.iter(),
-        record.iter().skip(1)
+        record.iter().skip(2)
     )
         .map(|(n,x)| match x.parse::<f32>() {
             Ok(f) => (
@@ -43,6 +50,7 @@ fn make_food(
         .collect::<HashMap<String, f32>>();
     Food {
         name: name,
+        recommend: recommend,
         nutrients: nutrient_values,
     }
 }
@@ -57,7 +65,7 @@ fn get_nutrients(
         .map(|r| r
             .expect("cofid.csv is error free")
             .into_iter()
-            .skip(1)
+            .skip(2)
             .map(|s| s.to_owned())
             .collect()
         )
@@ -182,6 +190,7 @@ pub fn recommend_foods<'a>(
         .collect::<HashMap<String, f32>>();
     foods
         .iter()
+        .filter(|f| f.recommend)
         .k_largest_by_key(
             3,
             |f| balance_score(&f, &ideal_nutrients)
@@ -205,7 +214,7 @@ mod tests {
     #[test]
     fn csv_parses_ok() -> () {
         let (_nutrients, foods) = get_foods();
-        assert_eq!(foods.len(), 1554);
+        assert_eq!(foods.len(), 2887);
         assert_eq!(foods[0].nutrients.len(), 58);
     }
 
