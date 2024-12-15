@@ -1,8 +1,10 @@
 use leptos::prelude::*;
 use leptos::web_sys;
+use leptos_use::signal_debounced;
+use itertools::Itertools;
 
 mod csv_parse;
-use csv_parse::{Food, Nutrient, get_foods};
+use csv_parse::{Food, Nutrient, get_foods, lookup_foods, sum_nutrients, recommend_foods};
 
 async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
     let res = reqwasm::http::Request::get("/assets/cofid.csv")
@@ -15,11 +17,31 @@ async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
 fn get_response(
     foods: String, data: Option<Result<(Vec<Nutrient>, Vec<Food>)>>
 ) -> String {
-    if let None = data {
-        return "ok".to_string();
+    if foods.len() == 0 {
+        return "".to_string();
     }
-
-    "test".to_string() + &foods
+    if let None = data {
+        return "Searching...".to_string();
+    }
+    let (nutrients, foods) = data.unwrap().unwrap();
+    let found_foods = lookup_foods(
+        &foods,
+        "Ackee, Amla, Apples".to_string()
+    );
+    let nutrients_sum = sum_nutrients(
+        &nutrients,
+        &found_foods
+    );
+    let recommended_foods = recommend_foods(
+        &nutrients,
+        &foods,
+        &nutrients_sum
+    );
+    recommended_foods
+        .iter()
+        .map(|f| f.name.to_string())
+        .intersperse(", ".to_string())
+        .collect::<String>()
 }
 
 #[component]
@@ -40,16 +62,17 @@ fn Intro() -> impl IntoView {
 #[component]
 fn Foods() -> impl IntoView {
     let (foods, set_foods) = signal("".to_string());
+    let foods_debounced: Signal<String> = signal_debounced(foods, 1000.0);
     let data = LocalResource::new(move || get_data());
 
     view! {
         <input
-            on:input:target=move |e| set_foods.set(e.target().value()) 
+            on:input:target=move |e| set_foods.set(e.target().value())
             value=foods
             placeholder="eg. Bread, Brazil Nuts, Strawberry Milkshake"
             style="font-size: 1rem;"
         />
-        <p> {move || get_response(foods.get(), data.get().as_deref().cloned())} </p>
+        <p> {move || get_response(foods_debounced.get(), data.get().as_deref().cloned())} </p>
     }
 }
 

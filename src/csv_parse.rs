@@ -14,7 +14,7 @@ pub struct Nutrient {
 
 #[derive(Debug, Clone)]
 pub struct Food {
-    name: String,
+    pub name: String,
     nutrients: HashMap<String, f32>,
 }
 
@@ -121,7 +121,7 @@ fn lookup_food(
     }
 }
 
-fn lookup_foods(
+pub fn lookup_foods(
     foods: &Vec<Food>, search: String
 ) -> Vec<&Food> {
     let searches = search
@@ -132,7 +132,7 @@ fn lookup_foods(
         .collect::<Vec<&Food>>()
 }
 
-fn sum_nutrients(
+pub fn sum_nutrients(
     nutrients: &Vec<Nutrient>, foods: &Vec<&Food>
 ) -> HashMap<String, f32> {
     nutrients
@@ -164,7 +164,7 @@ fn balance_score(
         )
 }
 
-fn recommend_foods<'a>(
+pub fn recommend_foods<'a>(
     nutrients: &Vec<Nutrient>,
     foods: &'a Vec<Food>,
     nutrients_sum: &HashMap<String, f32>,
