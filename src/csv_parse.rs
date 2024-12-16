@@ -163,17 +163,15 @@ pub fn sum_nutrients(
 }
 
 fn balance_score(
-    food: &Food, ideal_nutrients: &HashMap<String, f32>
+    nutrients: &Vec<Nutrient>,
+    food: &Food,
+    nutrients_sum: &HashMap<String, f32>
 ) -> usize {
-    ideal_nutrients
+    nutrients
         .iter()
-        .fold(0, |a, (s, _)|
-            a + std::cmp::min(
-                (1000. * food.nutrients[s] / ideal_nutrients[s])
-                    as usize,
-                1000
-            ),
+        .map(|n| ((( 1000. * food.nutrients[&n.name] / (n.recommended_intake - nutrients_sum[&n.name])) as usize).min(1000)).max(0)
         )
+        .sum()
 }
 
 pub fn recommend_foods<'a>(
@@ -181,19 +179,12 @@ pub fn recommend_foods<'a>(
     foods: &'a Vec<Food>,
     nutrients_sum: &HashMap<String, f32>,
 ) -> Vec<&'a Food> {
-    let ideal_nutrients = nutrients
-        .iter()
-        .map(|n| (
-            n.name.clone(), 
-            n.recommended_intake - nutrients_sum[&n.name],
-        ))
-        .collect::<HashMap<String, f32>>();
     foods
         .iter()
         .filter(|f| f.recommend)
         .k_largest_by_key(
             3,
-            |f| balance_score(&f, &ideal_nutrients)
+            |f| balance_score(nutrients, &f, &nutrients_sum)
         )
         .collect::<Vec<&Food>>()
 }
