@@ -202,9 +202,7 @@ fn main() -> () {}
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
-    fn get_foods() -> (Vec<Nutrient>, Vec<Food>) {
+    fn get_foods() -> (Vec<super::Nutrient>, Vec<super::Food>) {
         let csv = std::fs::read_to_string(
             "./assets/cofid.csv"
         ).expect("cofid.csv is error free");
@@ -221,8 +219,10 @@ mod tests {
     #[test]
     fn search_food() -> () {
         let (_nutrients, foods) = get_foods();
-        let found_food = lookup_food(&foods, "Ackee".to_string())
-            .expect("should find a food");
+        let found_food = super::lookup_food(
+            &foods,
+            "Ackee".to_string()
+        ).expect("should find a food");
         assert_eq!(found_food.name, "Ackee, canned, drained");
         assert_eq!(found_food.nutrients["vitamin_c_mg"], 30.0);
     }
@@ -230,7 +230,7 @@ mod tests {
     #[test]
     fn search_food_multi_word() -> () {
         let (_nutrients, foods) = get_foods();
-        let found_food = lookup_food(
+        let found_food = super::lookup_food(
             &foods,
             "rice pudding".to_string()
         ).expect("should find a food");
@@ -238,7 +238,7 @@ mod tests {
             found_food.name,
             "Pudding, rice, canned"
         );
-        let found_food2 = lookup_food(
+        let found_food2 = super::lookup_food(
             &foods,
             "apple baked sugar".to_string()
         ).expect("should find a food");
@@ -251,7 +251,7 @@ mod tests {
     #[test]
     fn search_foods() -> () {
         let (_nutrients, foods) = get_foods();
-        let found_foods = lookup_foods(
+        let found_foods = super::lookup_foods(
             &foods,
             "Ackee, Amla, Apples".to_string()
         );
@@ -259,7 +259,7 @@ mod tests {
         assert_eq!(found_foods[1].name, "Amla");
         assert_eq!(found_foods[2].name, "Apples, eating, dried");
 
-        let found_foods2 = lookup_foods(
+        let found_foods2 = super::lookup_foods(
             &foods,
             "Ackee, Amla, baked apple".to_string()
         );
@@ -274,13 +274,13 @@ mod tests {
     #[test]
     fn search_foods_without_match() -> () {
         let (_nutrients, foods) = get_foods();
-        let lookup_result = lookup_food(
+        let lookup_result = super::lookup_food(
             &foods,
             "glorb".to_string()
         );
         assert!(lookup_result.is_none());
 
-        let found_foods = lookup_foods(
+        let found_foods = super::lookup_foods(
             &foods,
             "Ackee, glorb, baked apple".to_string()
         );
@@ -294,7 +294,7 @@ mod tests {
     #[test]
     fn sum_nutrients() -> () {
         let (nutrients, foods) = get_foods();
-        let found_foods = lookup_foods(
+        let found_foods = super::lookup_foods(
             &foods,
             "Ackee, Amla, Apples".to_string()
         );
@@ -309,7 +309,7 @@ mod tests {
     #[test]
     fn recommend() -> () {
         let (nutrients, foods) = get_foods();
-        let found_foods = lookup_foods(
+        let found_foods = super::lookup_foods(
             &foods,
             "Ackee, Amla, Apples".to_string()
         );
@@ -317,7 +317,7 @@ mod tests {
             &nutrients,
             &found_foods
         );
-        let recommended_foods = recommend_foods(
+        let recommended_foods = super::recommend_foods(
             &nutrients,
             &foods,
             &nutrients_sum
