@@ -38,13 +38,13 @@ fn get_response(
         &foods,
         &nutrients_sum
     );
-    let recommended_names = recommended_foods
+    let recommended = recommended_foods
         .iter()
-        .map(|f| f.name.to_string())
+        .map(|f| format!("{} - high in {}", f.name.to_string(), get_highest_and_lowest_nutrients(&nutrients, &f.nutrients).0.display_name))
         .collect::<Vec<String>>();
     format!(
         "Sounds delicious, you have had a lot of {} 😋 Try eating some of these foods to balance your diet:\n\n{}\n{}\n{}",
-        highest_nutrient.display_name, recommended_names[0], recommended_names[1], recommended_names[2]
+        highest_nutrient.display_name, recommended[0], recommended[1], recommended[2]
     )
 }
 

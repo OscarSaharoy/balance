@@ -16,7 +16,7 @@ pub struct Nutrient {
 pub struct Food {
     pub name: String,
     recommend: bool,
-    nutrients: HashMap<String, f32>,
+    pub nutrients: HashMap<String, f32>,
 }
 
 fn make_food(
