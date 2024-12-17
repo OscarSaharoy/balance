@@ -138,7 +138,8 @@ pub fn lookup_foods(
 ) -> Vec<&Food> {
     let searches = search
         .split(",")
-        .map(|s| s.trim().to_string());
+        .map(|s| s.trim().to_string())
+        .filter(|s| s.len() > 0);
     searches
         .filter_map(|s| lookup_food(foods, s))
         .collect::<Vec<&Food>>()
