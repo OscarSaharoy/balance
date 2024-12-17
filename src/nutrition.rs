@@ -4,11 +4,11 @@ use itertools::Itertools;
 
 #[derive(Debug, Clone)]
 pub struct Nutrient {
-    name: String,
-    display_name: String,
-    abbreviation: String,
-    units: String,
-    recommended_intake: f32,
+    pub name: String,
+    pub display_name: String,
+    pub abbreviation: String,
+    pub units: String,
+    pub recommended_intake: f32,
 }
 
 

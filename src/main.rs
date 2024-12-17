@@ -4,7 +4,7 @@ use leptos_use::signal_debounced;
 use itertools::Itertools;
 
 mod nutrition;
-use nutrition::{Food, Nutrient, get_foods, lookup_foods, sum_nutrients, recommend_foods};
+use nutrition::{Food, Nutrient, get_foods, lookup_foods, sum_nutrients, recommend_foods, get_highest_and_lowest_nutrients};
 
 async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
     let res = reqwasm::http::Request::get("/assets/cofid.csv")
@@ -29,6 +29,10 @@ fn get_response(
         &nutrients,
         &found_foods
     );
+    let (highest_nutrient, lowest_nutrient) =
+        get_highest_and_lowest_nutrients(
+            &nutrients, &nutrients_sum
+        );
     let recommended_foods = recommend_foods(
         &nutrients,
         &foods,
@@ -38,7 +42,10 @@ fn get_response(
         .iter()
         .map(|f| f.name.to_string())
         .collect::<Vec<String>>();
-    format!("Sounds delicious 😋 Try eating some of these foods to balance your diet:\n\n{}\n{}\n{}", recommended_names[0], recommended_names[1], recommended_names[2])
+    format!(
+        "Sounds delicious, you have had a lot of {} 😋 Try eating some of these foods to balance your diet:\n\n{}\n{}\n{}",
+        highest_nutrient.display_name, recommended_names[0], recommended_names[1], recommended_names[2]
+    )
 }
 
 #[component]
