@@ -190,6 +190,25 @@ pub fn recommend_foods<'a>(
         .collect::<Vec<&Food>>()
 }
 
+pub fn get_highest_and_lowest_nutrients<'a>(
+    nutrients: &'a Vec<Nutrient>,
+    nutrient_values: &HashMap<String, f32>
+) -> (&'a Nutrient, &'a Nutrient) {
+    let rank_nutrient = move |n: &&Nutrient| ( nutrient_values[&n.name] / n.recommended_intake * 1000. ) as usize;
+    (
+        nutrients
+            .iter()
+            .filter(|n| n.recommended_intake > 0.1)
+            .max_by_key(rank_nutrient)
+            .expect("nutrients is nonempty"),
+        nutrients
+            .iter()
+            .filter(|n| n.recommended_intake > 0.1)
+            .min_by_key(rank_nutrient)
+            .expect("nutrients is nonempty"),
+    )
+}
+
 fn main() -> () {}
 
 #[cfg(test)]
@@ -326,5 +345,33 @@ mod tests {
             recommended_foods[2].name,
             "Bran, wheat"
         );
+    }
+
+    #[test]
+    fn highest_and_lowest_nutrients() -> () {
+        let (nutrients, foods) = get_foods();
+        let ackee = &foods[0];
+        assert_eq!(ackee.name, "Ackee, canned, drained");
+        let (highest_nutrient, lowest_nutrient) = 
+            super::get_highest_and_lowest_nutrients(
+                &nutrients, &ackee.nutrients
+            );
+        assert_eq!(highest_nutrient.name, "vitamin_c_mg");
+        assert_eq!(lowest_nutrient.name, "fibre_g");
+
+        let found_foods = super::lookup_foods(
+            &foods,
+            "Yeast, Yeast, Yeast".to_string()
+        );
+        let nutrients_sum = super::sum_nutrients(
+            &nutrients,
+            &found_foods
+        );
+        let (highest_nutrient, lowest_nutrient) = 
+            super::get_highest_and_lowest_nutrients(
+                &nutrients, &nutrients_sum
+            );
+        assert_eq!(highest_nutrient.name, "folate_ug");
+        assert_eq!(lowest_nutrient.name, "retinol_ug");
     }
 }
