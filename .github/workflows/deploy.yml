@@ -10,6 +10,10 @@ jobs:
         steps:
             - name: Check out repository code
               uses: actions/checkout@v4
+            - name: trunk-action
+              uses: jetli/trunk-action@v0.5.0
+            - name: test trunk
+              run: rustup target add wasm32-unknown-unknown && trunk build
             - name: List files in the repository
               run: mkdir dist && echo "<p> test </p>" > dist/index.html
             - name: Upload static files as artifact
