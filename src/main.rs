@@ -6,10 +6,14 @@ use itertools::Itertools;
 mod nutrition;
 use nutrition::{Food, Nutrient, get_foods, lookup_foods, sum_nutrients, recommend_foods, get_highest_and_lowest_nutrients};
 
-async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
+fn get_url(path: String) -> String {
     let window = web_sys::window().expect("Missing Window");
     let href = window.location().href().expect("Missing location.href");
-    let res = reqwasm::http::Request::get(&format!("{href}assets/cofid.csv"))
+    format!("{href}{path}")
+}
+
+async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
+    let res = reqwasm::http::Request::get(&get_url("assets/cofid.csv".to_string()))
         .send().await?;
     let text = res.text().await?;
     let (nutrients, foods) = get_foods(text);
@@ -100,7 +104,7 @@ fn App() -> impl IntoView {
             </main>
             <footer style="display: grid; grid-auto-flow: column; align-items: center; gap: .7rem; justify-self: start; align-self: end;">
                 <a href="https://github.com/OscarSaharoy/balance" style="display: grid;" target="_blank" rel="noopener noreferrer">
-                    <img src="/assets/github.svg" style="height: 1.5rem;" class="invert" />
+                    <img src={get_url("/assets/github.svg".to_string())} style="height: 1.5rem;" class="invert" />
                 </a>
                 <p style="font-size: 0.8rem;"> "Made by Oscar Saharoy. Don't rely on this for good nutrition advice!" </p>
             </footer>
