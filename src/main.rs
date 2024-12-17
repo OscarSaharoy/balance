@@ -7,7 +7,9 @@ mod nutrition;
 use nutrition::{Food, Nutrient, get_foods, lookup_foods, sum_nutrients, recommend_foods, get_highest_and_lowest_nutrients};
 
 async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
-    let res = reqwasm::http::Request::get("/assets/cofid.csv")
+    let window = web_sys::window().expect("Missing Window");
+    let href = window.location().href().expect("Missing location.href");
+    let res = reqwasm::http::Request::get(&format!("{href}assets/cofid.csv"))
         .send().await?;
     let text = res.text().await?;
     let (nutrients, foods) = get_foods(text);
