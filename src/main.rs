@@ -15,19 +15,16 @@ async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
 }
 
 fn get_response(
-    foods: String, data: Option<Result<(Vec<Nutrient>, Vec<Food>)>>
+    input: String, data: Option<Result<(Vec<Nutrient>, Vec<Food>)>>
 ) -> String {
-    if foods.len() == 0 {
+    if input.len() == 0 {
         return "".to_string();
     }
     if let None = data {
         return "Searching...".to_string();
     }
     let (nutrients, foods) = data.unwrap().unwrap();
-    let found_foods = lookup_foods(
-        &foods,
-        "Ackee, Amla, Apples".to_string()
-    );
+    let found_foods = lookup_foods(&foods, input);
     let nutrients_sum = sum_nutrients(
         &nutrients,
         &found_foods

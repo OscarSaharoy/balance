@@ -166,11 +166,11 @@ fn balance_score(
     nutrients: &Vec<Nutrient>,
     food: &Food,
     nutrients_sum: &HashMap<String, f32>
-) -> usize {
+) -> i64 {
     nutrients
         .iter()
-        .map(|n| ((( 1000. * food.nutrients[&n.name] / (n.recommended_intake - nutrients_sum[&n.name])) as usize).min(1000)).max(0)
-        )
+        .filter(|n| n.recommended_intake > 0.1)
+        .map(|n| ((( 1000. * food.nutrients[&n.name] / n.recommended_intake ) * ( 1. - 4. * nutrients_sum[&n.name] / n.recommended_intake )) as i64).min(1000).max(-1000))
         .sum()
 }
 
