@@ -17,5 +17,5 @@ name = "main"
 path = "src/main.rs"
 
 [[bin]]
-name = "csv_parse"
-path = "src/csv_parse.rs"
+name = "nutrition"
+path = "src/nutrition.rs"

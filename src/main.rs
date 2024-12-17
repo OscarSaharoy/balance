@@ -3,8 +3,8 @@ use leptos::web_sys;
 use leptos_use::signal_debounced;
 use itertools::Itertools;
 
-mod csv_parse;
-use csv_parse::{Food, Nutrient, get_foods, lookup_foods, sum_nutrients, recommend_foods};
+mod nutrition;
+use nutrition::{Food, Nutrient, get_foods, lookup_foods, sum_nutrients, recommend_foods};
 
 async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
     let res = reqwasm::http::Request::get("/assets/cofid.csv")
