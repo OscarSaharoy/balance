@@ -1,15 +1,35 @@
 name: GitHub Actions Demo
-run-name: Deploy balance 🚀
+run-name: Deploy balance ⚖️
 on:
     push:
         branches:
             - main
 jobs:
-    Explore-GitHub-Actions:
+    build:
         runs-on: ubuntu-latest
         steps:
             - name: Check out repository code
               uses: actions/checkout@v4
             - name: List files in the repository
-              run: ls ${{ github.workspace }}
+              run: mkdir dist && echo "<p> test </p>" > dist/index.html
+            - name: Upload static files as artifact
+              id: deployment
+              uses: actions/upload-pages-artifact@v3
+              with:
+                  path: dist/
+
+    deploy:
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        runs-on: ubuntu-latest
+        needs: build
+        permissions:
+            pages: write
+            id-token: write
+        steps:
+            - name: Deploy to GitHub Pages
+              id: deployment
+              uses: actions/deploy-pages@v4
+
 
