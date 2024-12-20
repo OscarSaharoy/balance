@@ -15,6 +15,7 @@ pub struct Nutrient {
 #[derive(Debug, Clone)]
 pub struct Food {
     pub name: String,
+    pub display_name: String,
     recommend: bool,
     pub nutrients: HashMap<String, f32>,
 }
@@ -27,15 +28,19 @@ fn make_food(
         .get(0)
         .expect("each row has at least 1 record")
         .to_owned();
-    let recommend = match record
+    let display_name = record
         .get(1)
-        .expect("each row has at least 2 records") {
+        .expect("each row has at least 2 records")
+        .to_owned();
+    let recommend = match record
+        .get(2)
+        .expect("each row has at least 3 records") {
         "TRUE" => true,
         _ => false,
     };
     let nutrient_values = std::iter::zip(
         nutrients.iter(),
-        record.iter().skip(2)
+        record.iter().skip(3)
     )
         .map(|(n,x)| match x.parse::<f32>() {
             Ok(f) => (
@@ -50,6 +55,7 @@ fn make_food(
         .collect::<HashMap<String, f32>>();
     Food {
         name: name,
+        display_name: display_name,
         recommend: recommend,
         nutrients: nutrient_values,
     }
@@ -65,7 +71,7 @@ fn get_nutrients(
         .map(|r| r
             .expect("cofid.csv is error free")
             .into_iter()
-            .skip(2)
+            .skip(3)
             .map(|s| s.to_owned())
             .collect()
         )
