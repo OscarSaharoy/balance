@@ -46,7 +46,7 @@ fn get_response(
     );
     let recommended = recommended_foods
         .iter()
-        .map(|f| format!("{} - high in {}", f.name.to_string(), get_highest_and_lowest_nutrients(&nutrients, &f.nutrients).0.display_name))
+        .map(|f| format!("{} - high in {}", f.display_name.to_string(), get_highest_and_lowest_nutrients(&nutrients, &f.nutrients).0.display_name))
         .collect::<Vec<String>>();
     format!(
         "Sounds delicious, you have had a lot of {} 😋 Try eating some of these foods to balance your diet:\n\n{}\n{}\n{}",
@@ -70,6 +70,16 @@ fn Intro() -> impl IntoView {
 }
 
 #[component]
+fn Match(text: String) -> impl IntoView {
+    view! {
+        <div style="padding: 0.5rem 0.6rem 0.5rem 1rem; background: var(--bg2); border: 1px solid var(--fg); border-radius: 2rem; display: grid; grid-template-columns: auto max-content; gap: 0.25rem;">
+            <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"> { text } </p>
+            <img src={get_url("/assets/x.svg".to_string())} style="height: 1.5rem;" class="invert" />
+        </div>
+    }
+}
+
+#[component]
 fn Foods() -> impl IntoView {
     let (foods, set_foods) = signal("".to_string());
     let foods_debounced: Signal<String> = signal_debounced(foods, 500.0);
@@ -77,6 +87,9 @@ fn Foods() -> impl IntoView {
     let generating = move || foods_debounced.get() != foods.get();
 
     view! {
+        <Match text="🥮 Cake".to_string() />
+        <Match text="🥧 Pie".to_string() />
+        <Match text="🥕 Vegatal adwadawda dawdawdawdaw dawdawdawdawda wdawdawdawdawdaw dawdawdawd".to_string() />
         <input
             on:input:target=move |e| set_foods.set(e.target().value())
             value=foods
