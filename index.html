@@ -49,12 +49,55 @@
             border-bottom: 1px solid var(--fg);
             background: transparent;
             padding: 0.4rem 0.6rem;
-            border-radius: 0.25rem 0.25rem 0 0;
+            border-radius: 0.5rem;
             color: var(--fg);
             min-width: 0;
         }
         input:hover {
             background: var(--bg2);
+        }
+
+        button {
+            appearance: none;
+            background: none;
+            border: none;
+            color: var(--fg);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            text-align: left;
+        }
+        button:hover {
+            background: var(--bg2);
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .search-outer {
+            height: 2.4rem;
+            overflow: visible;
+        }
+        .search-container {
+            padding: 1px;
+            display: grid;
+            border-radius: 0.5rem;
+            z-index: 1;
+            position: relative;
+            background: var(--bg);
+        }
+        .search-container button {
+            display: none;
+        }
+        .search-container:focus-within {
+            padding: 0px;
+            border: 1px solid var(--fg);
+        }
+        .search-container:focus-within input {
+            border-bottom: none;
+        }
+        .search-container:focus-within button {
+            display: grid;
         }
     </style>
 </head>

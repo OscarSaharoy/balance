@@ -1,7 +1,5 @@
 use leptos::prelude::*;
 use leptos::web_sys;
-use leptos_use::signal_debounced;
-use itertools::Itertools;
 
 mod nutrition;
 use nutrition::{Food, Nutrient, get_foods, lookup_foods, sum_nutrients, recommend_foods, get_highest_and_lowest_nutrients};
@@ -85,28 +83,37 @@ fn Match(text: String) -> impl IntoView {
 }
 
 #[component]
-fn Foods() -> impl IntoView {
-    let (foods, set_foods) = signal("".to_string());
-    let foods_debounced: Signal<String> = signal_debounced(foods, 500.0);
-    let data = LocalResource::new(move || get_data());
-    let generating = move || foods_debounced.get() != foods.get();
-
+fn FoodSearch(foods: ReadSignal<Vec<Food>>, set_foods: WriteSignal<Vec<Food>>) -> impl IntoView {
+    let (search, set_search) = signal("".to_string());
     view! {
         <Match text="🥮 Cake".to_string() />
         <Match text="🥧 Pie".to_string() />
         <Match text="🥕 Vegatal adwadawda dawdawdawdaw dawdawdawdawda wdawdawdawdawdaw dawdawdawd".to_string() />
-        <input
-            on:input:target=move |e| set_foods.set(e.target().value())
-            value=foods
-            placeholder="eg. Bread, Brazil Nuts, Strawberry Milkshake"
-            style="font-size: 1rem;"
-        />
-        <p style:display=move || if generating() { "block" } else { "none" }> "Generating 🤔" </p>
-        <p
-            style:opacity=move || if generating() { "0.5" } else { "1" }
-            style="white-space: pre-wrap;"
-        >
-            { move || get_response(foods_debounced.get(), data.get().as_deref().cloned()) }
+        <div class="search-outer">
+            <div class="search-container">
+                <input
+                    on:input:target=move |e| set_search.set(e.target().value())
+                    placeholder="eg. Bread, Brazil Nuts, Strawberry Milkshake"
+                    style="font-size: 1rem;"
+                />
+                <button> test1 </button>
+                <button> test1 </button>
+                <button> test1 </button>
+                <button> test1 </button>
+            </div>
+        </div>
+    }
+}
+
+#[component]
+fn Foods() -> impl IntoView {
+    let (foods, set_foods) = signal(Vec::<Food>::new());
+    let data = LocalResource::new(move || get_data());
+
+    view! {
+        <FoodSearch foods={foods} set_foods={set_foods} />
+        <p style="white-space: pre-wrap;">
+            { move || get_response("nut".to_string(), data.get().as_deref().cloned()) }
         </p>
     }
 }
