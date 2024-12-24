@@ -279,7 +279,7 @@ mod tests {
             &nutrients,
             &found_foods
         );
-        assert_eq!(nutrients_sum["vitamin_c_mg"], 38.);
+        assert_eq!(nutrients_sum["vitamin_c_mg"], 48.);
         assert_eq!(nutrients_sum["vitamin_b12_ug"], 0.);
     }
 
