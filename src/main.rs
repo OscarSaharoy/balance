@@ -11,27 +11,22 @@ fn get_url(path: String) -> String {
 }
 
 async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
-    let res = reqwasm::http::Request::get(&get_url("assets/cofid.csv".to_string()))
-        .send().await?;
+    let res = reqwasm::http::Request::get(
+        &get_url("assets/cofid.csv".to_string())
+    ).send().await?;
     let text = res.text().await?;
     let (nutrients, foods) = get_foods(text);
     Ok((nutrients, foods))
 }
 
 fn get_response(
-    input: String, data: Option<Result<(Vec<Nutrient>, Vec<Food>)>>
+    selected_foods: Vec<&Food>,
+    nutrients: &Vec<Nutrient>,
+    foods: &Vec<Food>,
 ) -> String {
-    if input.len() == 0 {
-        return "".to_string();
-    }
-    if let None = data {
-        return "Searching...".to_string();
-    }
-    let (nutrients, foods) = data.unwrap().unwrap();
-    let found_foods = Vec::<&Food>::new();
     let nutrients_sum = sum_nutrients(
         &nutrients,
-        &found_foods
+        &selected_foods,
     );
     let (highest_nutrient, lowest_nutrient) =
         get_highest_and_lowest_nutrients(
@@ -73,18 +68,26 @@ fn Intro() -> impl IntoView {
 }
 
 #[component]
-fn Match(text: String) -> impl IntoView {
+fn Match(food: Food) -> impl IntoView {
     view! {
         <div style="padding: 0.5rem 0.6rem 0.5rem 1rem; background: var(--bg2); border: 1px solid var(--fg); border-radius: 2rem; display: grid; grid-template-columns: auto max-content; gap: 0.25rem;">
-            <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"> { text } </p>
+            <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"> { food.display_name } </p>
             <img src={get_url("/assets/x.svg".to_string())} style="height: 1.5rem;" class="invert" />
         </div>
     }
 }
 
 #[component]
-fn FoodSearch(foods: ReadSignal<Vec<Food>>, set_foods: WriteSignal<Vec<Food>>) -> impl IntoView {
+fn FoodSearch(
+    selected_foods: ReadSignal<Vec<Food>>,
+    set_selcted_foods: WriteSignal<Vec<Food>>,
+    foods: Option<&Vec<Food>>,
+) -> impl IntoView {
     let (search, set_search) = signal("".to_string());
+    let matches = move || match foods {
+        Some(foods) => lookup_food(search, foods),
+        None => Vec::<&Food>::new(),
+    };
     view! {
         <Match text="🥮 Cake".to_string() />
         <Match text="🥧 Pie".to_string() />
@@ -107,14 +110,28 @@ fn FoodSearch(foods: ReadSignal<Vec<Food>>, set_foods: WriteSignal<Vec<Food>>) -
 
 #[component]
 fn Foods() -> impl IntoView {
-    let (foods, set_foods) = signal(Vec::<Food>::new());
+    let (selected_foods, set_selected_foods) = signal(Vec::<Food>::new());
     let data = LocalResource::new(move || get_data());
+    let (nutrients, foods) = move || match data.get().as_deref() {
+        Some(Ok((nutrients, foods))) => (Some(nutrients), Some(data)),
+        _ => (None, None),
+    };
 
     view! {
-        <FoodSearch foods={foods} set_foods={set_foods} />
-        <p style="white-space: pre-wrap;">
-            { move || get_response("nut".to_string(), data.get().as_deref().cloned()) }
-        </p>
+        <FoodSearch
+            selected_foods={selected_foods}
+            set_selected_foods={set_selected_foods}
+            foods={foods} />
+        { if foods.is_some() && nutriemts.is_some() {
+            // may need view! {
+            <p style="white-space: pre-wrap;">
+                { move || get_response(
+                    selected_foods,
+                    nutrients,
+                    foods,
+                ) }
+            </p>
+        } }
     }
 }
 
