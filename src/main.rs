@@ -46,7 +46,12 @@ fn get_response(
     );
     let recommended = recommended_foods
         .iter()
-        .map(|f| format!("{} - high in {}", f.display_name.to_string(), get_highest_and_lowest_nutrients(&nutrients, &f.nutrients).0.display_name))
+        .map(|f| format!(
+            "{} {} - high in {}",
+            f.emoji.to_string(),
+            f.display_name.to_string(),
+            get_highest_and_lowest_nutrients(&nutrients, &f.nutrients).0.display_name)
+        )
         .collect::<Vec<String>>();
     format!(
         "Sounds delicious, you have had a lot of {} 😋 Try eating some of these foods to balance your diet:\n\n{}\n{}\n{}",
