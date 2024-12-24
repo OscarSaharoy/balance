@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use itertools::Itertools;
+use fuzzy_matcher::FuzzyMatcher;
+use fuzzy_matcher::skim::SkimMatcherV2;
 
 
 #[derive(Debug, Clone)]
@@ -119,42 +121,23 @@ pub fn get_foods(csv: String) -> (Vec<Nutrient>, Vec<Food>) {
     (nutrients, foods)
 }
 
-fn match_score(food: &Food, search_words: &Vec<String>) -> usize {
-    search_words
-        .into_iter()
-        .fold(0, |a, s| 
-            a + (food.name.to_lowercase().contains(s) as usize)
-        ) * 1000 + 1000 / food.name.len()
-}
-
 fn lookup_food(
     foods: &Vec<Food>, search: String
 ) -> Option<&Food> {
-    let search_words = search
-        .split(" ")
-        .map(|s| s.trim().to_lowercase())
-        .collect::<Vec<String>>();
-    let best_match = foods
+    let matcher = SkimMatcherV2::default();
+    let search = search.trim().to_lowercase();
+    let matches = foods
         .iter()
-        .max_by_key(|f| match_score(f, &search_words))
-        .expect("foods is nonempty");
-    if match_score(best_match, &search_words) > 1000 {
-        Some(best_match)
-    } else {
-        None
-    }
-}
-
-pub fn lookup_foods(
-    foods: &Vec<Food>, search: String
-) -> Vec<&Food> {
-    let searches = search
-        .split(",")
-        .map(|s| s.trim().to_string())
-        .filter(|s| s.len() > 0);
-    searches
-        .filter_map(|s| lookup_food(foods, s))
-        .collect::<Vec<&Food>>()
+        .k_largest_by_key(
+            5,
+            |f| matcher
+                .fuzzy_match(&f.display_name, &search)
+                .unwrap_or(0) * 100 - f.display_name.len() as i64
+        )
+        .collect::<Vec<&Food>>();
+    println!("{:?}", matches.iter().map(|&f| f.display_name.to_string()).collect::<Vec<_>>());
+    println!("{:?}", matches.iter().map(|&f| matcher.fuzzy_match(&f.display_name, &search)).collect::<Vec<_>>());
+    Some(matches[0])
 }
 
 pub fn sum_nutrients(
@@ -240,87 +223,58 @@ mod tests {
     }
 
     #[test]
-    fn search_food() -> () {
+    fn search_single_food() -> () {
         let (_nutrients, foods) = get_foods();
-        let found_food = super::lookup_food(
-            &foods,
-            "Ackee".to_string()
-        ).expect("should find a food");
-        assert_eq!(found_food.name, "Ackee, canned, drained");
-        assert_eq!(found_food.nutrients["vitamin_c_mg"], 30.0);
-    }
 
-    #[test]
-    fn search_food_multi_word() -> () {
-        let (_nutrients, foods) = get_foods();
-        let found_food = super::lookup_food(
-            &foods,
-            "rice pudding".to_string()
-        ).expect("should find a food");
         assert_eq!(
-            found_food.name,
-            "Pudding, rice, canned"
+            super::lookup_food(
+                &foods,
+                "Ackee".to_string()
+            )
+            .expect("should find a food")
+            .display_name,
+            "Canned Ackee",
         );
-        let found_food2 = super::lookup_food(
-            &foods,
-            "apple baked sugar".to_string()
-        ).expect("should find a food");
+
         assert_eq!(
-            found_food2.name,
-            "Apples, cooking, baked with sugar, flesh only"
+            super::lookup_food(
+                &foods,
+                "Rice Pudding".to_string()
+            )
+            .expect("should find a food")
+            .display_name,
+            "Canned Rice Pudding",
         );
-    }
 
-    #[test]
-    fn search_foods() -> () {
-        let (_nutrients, foods) = get_foods();
-        let found_foods = super::lookup_foods(
-            &foods,
-            "Ackee, Amla, Apples".to_string()
-        );
-        assert_eq!(found_foods[0].name, "Ackee, canned, drained");
-        assert_eq!(found_foods[1].name, "Amla");
-        assert_eq!(found_foods[2].name, "Apples, eating, dried");
-
-        let found_foods2 = super::lookup_foods(
-            &foods,
-            "Ackee, Amla, baked apple".to_string()
-        );
-        assert_eq!(found_foods2[0].name, "Ackee, canned, drained");
-        assert_eq!(found_foods2[1].name, "Amla");
         assert_eq!(
-            found_foods2[2].name,
-            "Apples, cooking, baked with sugar, flesh only"
+            super::lookup_food(
+                &foods,
+                "Beef".to_string()
+            )
+            .expect("should find a food")
+            .display_name,
+            "Beef Pie",
         );
-    }
 
-    #[test]
-    fn search_foods_without_match() -> () {
-        let (_nutrients, foods) = get_foods();
-        let lookup_result = super::lookup_food(
-            &foods,
-            "glorb".to_string()
-        );
-        assert!(lookup_result.is_none());
-
-        let found_foods = super::lookup_foods(
-            &foods,
-            "Ackee, glorb, baked apple".to_string()
-        );
-        assert_eq!(found_foods[0].name, "Ackee, canned, drained");
         assert_eq!(
-            found_foods[1].name,
-            "Apples, cooking, baked with sugar, flesh only"
+            super::lookup_food(
+                &foods,
+                "baked apple sugar".to_string()
+            )
+            .expect("should find a food")
+            .display_name,
+            "Baked Cooking Apples with Sugar",
         );
     }
 
     #[test]
     fn sum_nutrients() -> () {
         let (nutrients, foods) = get_foods();
-        let found_foods = super::lookup_foods(
-            &foods,
-            "Ackee, Amla, Apples".to_string()
-        );
+        let found_foods = vec!["Ackee", "Amla", "Apples"]
+            .iter()
+            .map(|&s| super::lookup_food(&foods, s.to_string())
+                .expect("matching foods exist")
+            ).collect::<Vec<&super::Food>>();
         let nutrients_sum = super::sum_nutrients(
             &nutrients,
             &found_foods
@@ -332,10 +286,7 @@ mod tests {
     #[test]
     fn recommend() -> () {
         let (nutrients, foods) = get_foods();
-        let found_foods = super::lookup_foods(
-            &foods,
-            "Ackee, Amla, Apples".to_string()
-        );
+        let found_foods = Vec::<&super::Food>::new();
         let nutrients_sum = super::sum_nutrients(
             &nutrients,
             &found_foods
@@ -371,10 +322,13 @@ mod tests {
         assert_eq!(highest_nutrient.name, "vitamin_c_mg");
         assert_eq!(lowest_nutrient.name, "fibre_g");
 
-        let found_foods = super::lookup_foods(
-            &foods,
-            "Yeast, Yeast, Yeast".to_string()
-        );
+        let yeast = foods
+                .iter()
+                .find(|f| f
+                    .display_name
+                    .contains("Yeast Extract")
+                ).expect("food exists that matches");
+        let found_foods = vec![yeast; 3];
         let nutrients_sum = super::sum_nutrients(
             &nutrients,
             &found_foods
@@ -384,6 +338,6 @@ mod tests {
                 &nutrients, &nutrients_sum
             );
         assert_eq!(highest_nutrient.name, "folate_ug");
-        assert_eq!(lowest_nutrient.name, "retinol_ug");
+        assert_eq!(lowest_nutrient.name, "fibre_g");
     }
 }

@@ -2,7 +2,7 @@ use leptos::prelude::*;
 use leptos::web_sys;
 
 mod nutrition;
-use nutrition::{Food, Nutrient, get_foods, lookup_foods, sum_nutrients, recommend_foods, get_highest_and_lowest_nutrients};
+use nutrition::{Food, Nutrient, get_foods, sum_nutrients, recommend_foods, get_highest_and_lowest_nutrients};
 
 fn get_url(path: String) -> String {
     let window = web_sys::window().expect("Missing Window");
@@ -28,7 +28,7 @@ fn get_response(
         return "Searching...".to_string();
     }
     let (nutrients, foods) = data.unwrap().unwrap();
-    let found_foods = lookup_foods(&foods, input);
+    let found_foods = Vec::<&Food>::new();
     let nutrients_sum = sum_nutrients(
         &nutrients,
         &found_foods
