@@ -121,7 +121,7 @@ pub fn get_foods(csv: String) -> (Vec<Nutrient>, Vec<Food>) {
     (nutrients, foods)
 }
 
-fn lookup_food(
+pub fn lookup_food(
     foods: &Vec<Food>, search: String
 ) -> Vec<&Food> {
     let matcher = SkimMatcherV2::default();

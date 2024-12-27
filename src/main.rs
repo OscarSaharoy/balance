@@ -2,7 +2,7 @@ use leptos::prelude::*;
 use leptos::web_sys;
 
 mod nutrition;
-use nutrition::{Food, Nutrient, get_foods, sum_nutrients, recommend_foods, get_highest_and_lowest_nutrients};
+use nutrition::{Food, Nutrient, get_foods, lookup_food, sum_nutrients, recommend_foods, get_highest_and_lowest_nutrients};
 
 fn get_url(path: String) -> String {
     let window = web_sys::window().expect("Missing Window");
@@ -19,6 +19,7 @@ async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
     Ok((nutrients, foods))
 }
 
+/*
 fn get_response(
     selected_foods: Vec<&Food>,
     nutrients: &Vec<Nutrient>,
@@ -51,6 +52,7 @@ fn get_response(
         highest_nutrient.display_name, recommended[0], recommended[1], recommended[2]
     )
 }
+*/
 
 #[component]
 fn Space<'a>(height: &'a str) -> impl IntoView + use<'a> {
@@ -80,18 +82,15 @@ fn Match(food: Food) -> impl IntoView {
 #[component]
 fn FoodSearch(
     selected_foods: ReadSignal<Vec<Food>>,
-    set_selcted_foods: WriteSignal<Vec<Food>>,
-    foods: Option<&Vec<Food>>,
+    set_selected_foods: WriteSignal<Vec<Food>>,
+    foods: Result<Vec<Food>, &'static str>,
 ) -> impl IntoView {
     let (search, set_search) = signal("".to_string());
-    let matches = move || match foods {
-        Some(foods) => lookup_food(search, foods),
-        None => Vec::<&Food>::new(),
+    let foods_vec = move || match foods {
+        Ok(foods) => foods,
+        Err(_) => Vec::<Food>::new(),
     };
     view! {
-        <Match text="🥮 Cake".to_string() />
-        <Match text="🥧 Pie".to_string() />
-        <Match text="🥕 Vegatal adwadawda dawdawdawdaw dawdawdawdawda wdawdawdawdawdaw dawdawdawd".to_string() />
         <div class="search-outer">
             <div class="search-container">
                 <input
@@ -103,6 +102,7 @@ fn FoodSearch(
                 <button> test1 </button>
                 <button> test1 </button>
                 <button> test1 </button>
+                /*<p> { move || match foods { Err(s) => s, _ => "" } } </p>*/
             </div>
         </div>
     }
@@ -112,26 +112,23 @@ fn FoodSearch(
 fn Foods() -> impl IntoView {
     let (selected_foods, set_selected_foods) = signal(Vec::<Food>::new());
     let data = LocalResource::new(move || get_data());
-    let (nutrients, foods) = move || match data.get().as_deref() {
-        Some(Ok((nutrients, foods))) => (Some(nutrients), Some(data)),
-        _ => (None, None),
+
+    let get_nutrients_and_foods = move || match data.get() {
+        None => (Err("Loading data..."), Err("Loading data...")),
+        Some(sw) => match sw.take() {
+            Ok((nutrients, foods)) => (Ok(nutrients), Ok(foods)),
+            _ => (Err("Error loading data 😭"), Err("Error loading data 😭")),
+        },
     };
+    let nutrients = move || get_nutrients_and_foods().0;
+    let foods = move || get_nutrients_and_foods().1;
 
     view! {
         <FoodSearch
             selected_foods={selected_foods}
             set_selected_foods={set_selected_foods}
-            foods={foods} />
-        { if foods.is_some() && nutriemts.is_some() {
-            // may need view! {
-            <p style="white-space: pre-wrap;">
-                { move || get_response(
-                    selected_foods,
-                    nutrients,
-                    foods,
-                ) }
-            </p>
-        } }
+            foods={foods()}
+            />
     }
 }
 
