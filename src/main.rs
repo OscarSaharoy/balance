@@ -45,13 +45,13 @@ fn get_url(path: String) -> String {
     format!("{href}{path}")
 }
 
-async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
+async fn get_data() -> Result<Vec<Food>> {
     let res = reqwasm::http::Request::get(
         &get_url("assets/cofid.csv".to_string())
     ).send().await?;
     let text = res.text().await?;
-    let (nutrients, foods) = get_foods(text);
-    Ok((nutrients, foods))
+    let (_, foods) = get_foods(text);
+    Ok(foods)
 }
 
 #[component]
@@ -68,6 +68,7 @@ fn Match(food: Food) -> impl IntoView {
 fn FoodSearch(
     selected_foods: ReadSignal<Vec<Food>>,
     set_selected_foods: WriteSignal<Vec<Food>>,
+    data: LocalResource<Result<Vec<Food>>>,
 ) -> impl IntoView {
     let (search, set_search) = signal("".to_string());
     view! {
@@ -78,10 +79,13 @@ fn FoodSearch(
                     placeholder="eg. Bread, Brazil Nuts, Strawberry Milkshake"
                     style="font-size: 1rem;"
                 />
-                <button> test1 </button>
-                <button> test1 </button>
-                <button> test1 </button>
-                <button> test1 </button>
+                { move || {
+                    data.with(|value| match value.as_deref() {
+                        Some(Ok(foods)) => lookup_food(foods, search.get()).iter().map(|f| view! { <button> { f.display_name.to_string() } </button> }.into_any()).collect::<Vec<_>>(),
+                        _ => vec![view!{<p></p>}.into_any()],
+
+                    })
+                }}
             </div>
         </div>
     }
@@ -96,6 +100,7 @@ fn Foods() -> impl IntoView {
         <FoodSearch
             selected_foods={selected_foods}
             set_selected_foods={set_selected_foods}
+            data={data}
             />
     }
 }
