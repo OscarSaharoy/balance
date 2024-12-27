@@ -1,24 +1,3 @@
-use leptos::prelude::*;
-use leptos::web_sys;
-
-mod nutrition;
-use nutrition::{Food, Nutrient, get_foods, lookup_food, sum_nutrients, recommend_foods, get_highest_and_lowest_nutrients};
-
-fn get_url(path: String) -> String {
-    let window = web_sys::window().expect("Missing Window");
-    let href = window.location().href().expect("Missing location.href");
-    format!("{href}{path}")
-}
-
-async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
-    let res = reqwasm::http::Request::get(
-        &get_url("assets/cofid.csv".to_string())
-    ).send().await?;
-    let text = res.text().await?;
-    let (nutrients, foods) = get_foods(text);
-    Ok((nutrients, foods))
-}
-
 /*
 fn get_response(
     selected_foods: Vec<&Food>,
@@ -54,19 +33,25 @@ fn get_response(
 }
 */
 
-#[component]
-fn Space<'a>(height: &'a str) -> impl IntoView + use<'a> {
-    view! {
-        <div style:margin-top=height />
-    }
+use leptos::prelude::*;
+use leptos::web_sys;
+
+mod nutrition;
+use nutrition::{Food, Nutrient, get_foods, lookup_food, sum_nutrients, recommend_foods, get_highest_and_lowest_nutrients};
+
+fn get_url(path: String) -> String {
+    let window = web_sys::window().expect("Missing Window");
+    let href = window.location().href().expect("Missing location.href");
+    format!("{href}{path}")
 }
 
-#[component]
-fn Intro() -> impl IntoView {
-    view! {
-        <h1> "balance ⚖️ " </h1>
-        <p> "What have you eaten today?" </p>
-    }
+async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
+    let res = reqwasm::http::Request::get(
+        &get_url("assets/cofid.csv".to_string())
+    ).send().await?;
+    let text = res.text().await?;
+    let (nutrients, foods) = get_foods(text);
+    Ok((nutrients, foods))
 }
 
 #[component]
@@ -83,13 +68,8 @@ fn Match(food: Food) -> impl IntoView {
 fn FoodSearch(
     selected_foods: ReadSignal<Vec<Food>>,
     set_selected_foods: WriteSignal<Vec<Food>>,
-    foods: Result<Vec<Food>, &'static str>,
 ) -> impl IntoView {
     let (search, set_search) = signal("".to_string());
-    let foods_vec = move || match foods {
-        Ok(foods) => foods,
-        Err(_) => Vec::<Food>::new(),
-    };
     view! {
         <div class="search-outer">
             <div class="search-container">
@@ -102,7 +82,6 @@ fn FoodSearch(
                 <button> test1 </button>
                 <button> test1 </button>
                 <button> test1 </button>
-                /*<p> { move || match foods { Err(s) => s, _ => "" } } </p>*/
             </div>
         </div>
     }
@@ -113,22 +92,20 @@ fn Foods() -> impl IntoView {
     let (selected_foods, set_selected_foods) = signal(Vec::<Food>::new());
     let data = LocalResource::new(move || get_data());
 
-    let get_nutrients_and_foods = move || match data.get() {
-        None => (Err("Loading data..."), Err("Loading data...")),
-        Some(sw) => match sw.take() {
-            Ok((nutrients, foods)) => (Ok(nutrients), Ok(foods)),
-            _ => (Err("Error loading data 😭"), Err("Error loading data 😭")),
-        },
-    };
-    let nutrients = move || get_nutrients_and_foods().0;
-    let foods = move || get_nutrients_and_foods().1;
-
     view! {
         <FoodSearch
             selected_foods={selected_foods}
             set_selected_foods={set_selected_foods}
-            foods={foods()}
             />
+    }
+}
+
+
+#[component]
+fn Intro() -> impl IntoView {
+    view! {
+        <h1> "balance ⚖️ " </h1>
+        <p> "What have you eaten today?" </p>
     }
 }
 
@@ -151,13 +128,16 @@ fn App() -> impl IntoView {
     }
 }
 
-fn main() -> () {
-    console_error_panic_hook::set_once();
-    leptos::logging::log!("balance ⚖️ ");
-
-    leptos::mount::mount_to_body(App);
+fn remove_loading_placeholder() -> () {
     web_sys::window()
         .and_then(|window| window.document())
         .and_then(|document| document.get_element_by_id("loading-placeholder"))
         .map(|loading_placeholder| loading_placeholder.remove());
+}
+
+fn main() -> () {
+    console_error_panic_hook::set_once();
+    leptos::mount::mount_to_body(App);
+    remove_loading_placeholder();
+    leptos::logging::log!("balance ⚖️ ");
 }
