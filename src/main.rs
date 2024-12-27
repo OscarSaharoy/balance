@@ -81,8 +81,17 @@ fn FoodSearch(
                 />
                 { move || {
                     data.with(|value| match value.as_deref() {
-                        Some(Ok(foods)) => lookup_food(foods, search.get()).iter().map(|f| view! { <button> { f.display_name.to_string() } </button> }.into_any()).collect::<Vec<_>>(),
-                        _ => vec![view!{<p></p>}.into_any()],
+                        Some(Ok(foods)) => 
+                            lookup_food(foods, search.get())
+                                .iter()
+                                .map(|f| view! { 
+                                    <button> 
+                                        { f.display_name.to_string() }
+                                    </button> 
+                                }.into_any())
+                                .collect::<Vec<_>>(),
+                        _ => 
+                            vec![view!{<p></p>}.into_any()],
 
                     })
                 }}
