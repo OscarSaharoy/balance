@@ -56,6 +56,9 @@ fn FoodSearch(
                     style="font-size: 1rem;"
                 />
                 { move || {
+                    if search.read().len() == 0 {
+                        return vec![view!{<p></p>}.into_any()];
+                    }
                     match data.read().as_deref() {
                         Some(Ok((nutrients,foods))) =>
                             lookup_food(foods, search.get())
