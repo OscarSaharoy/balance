@@ -24,17 +24,29 @@ async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
 #[component]
 fn Match(
     food: Food,
-    on_remove: impl FnMut(Targeted<MouseEvent, HtmlButtonElement>) -> () + 'static,
+    nutrients: Vec<Nutrient>,
+    mut on_remove: Option<impl FnMut(Targeted<MouseEvent, HtmlButtonElement>) -> () + 'static>,
 ) -> impl IntoView {
     let name = food.display_name.clone();
+    let show_x = on_remove.is_some();
+    let (highest_nutrient, _) = get_highest_and_lowest_nutrients(nutrients, food.nutrients.clone());
     view! {
-        <div style="padding: 0.5rem 0.6rem 0.5rem 1rem; background: var(--bg2); border: 1px solid var(--fg); border-radius: 2rem; display: grid; grid-template-columns: auto max-content; gap: 0.25rem;">
+        <div
+            style="padding: 0.5rem 0.6rem 0.5rem 1rem; border: 1px solid var(--fg); border-radius: 2rem; display: grid; grid-template-columns: auto max-content max-content; gap: 0.25rem; align-items: center;"
+            style:background=if show_x { "var(--bg2)" } else { "unset" }
+        >
             <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"> { food.emoji } " " { food.display_name } </p>
+            <p style="font-weight: bold; font-size: 0.8rem;"> { highest_nutrient.display_name } </p>
             <button
-                on:click:target={on_remove}
+                on:click:target={move |e| if let Some(ref mut f) = on_remove { f(e); }}
                 style="padding: 0;"
             >
-                <img src={get_url("/assets/x.svg".to_string())} style="height: 1.5rem;" class="invert" />
+                <img
+                    src={get_url("/assets/x.svg".to_string())}
+                    style="height: 1.5rem;"
+                    style:display=move || if show_x { "unset" } else { "none" }
+                    class="invert" 
+                />
             </button>
         </div>
     }
@@ -109,20 +121,29 @@ fn FoodReport(
                         get_highest_and_lowest_nutrients(
                             nutrients.clone(), nutrients_sum.clone(),
                         );
-                    let recommended = recommended_foods
-                        .iter()
-                        .map(|f| format!(
-                            "{} {} - high in {}",
-                            f.emoji.to_string(),
-                            f.display_name.to_string(),
-                            get_highest_and_lowest_nutrients(nutrients.clone(), f.nutrients.clone()).0.display_name)
-                        )
-                        .collect::<Vec<String>>();
-                    view!{ <p style="white-space: pre-wrap;"> {
-                        format!(
-                            "Sounds delicious, you have had a lot of {} 😋 Try eating some of these foods to balance your diet:\n\n{}\n{}\n{}",
-                            highest_nutrient.display_name, recommended[0], recommended[1], recommended[2]
-                        ) } </p> }.into_any()
+                    view! {
+                        <p style="white-space: pre-wrap;">
+                            { format!(
+                                "Sounds delicious, you have had a lot of {} 😋 Try eating some of these foods to balance your diet:",
+                                highest_nutrient.display_name
+                            ) }
+                        </p>
+                        {
+                            recommended_foods
+                                .iter()
+                                .map(|f| {
+                                    let food = (*f).clone();
+                                    view! {
+                                        <Match
+                                            food={food}
+                                            nutrients={nutrients.clone()}
+                                            on_remove={None::<fn(Targeted<MouseEvent, HtmlButtonElement>) -> ()>}
+                                        />
+                                    }.into_any()
+                                })
+                                .collect::<Vec<_>>()
+                        }
+                    }.into_any()
                 },
                 _ =>
                     view!{<p></p>}.into_any(),
@@ -138,6 +159,10 @@ fn Foods() -> impl IntoView {
 
     view! {
         { move || {
+            let nutrients = match data.read().as_deref() {
+                Some(Ok((nutrients,_))) => nutrients.clone(),
+                _ => Vec::<Nutrient>::new(),
+            };
             selected_foods
                 .read()
                 .iter()
@@ -147,11 +172,12 @@ fn Foods() -> impl IntoView {
                     view! {
                         <Match
                             food={food}
-                            on_remove={move |e|
+                            nutrients={nutrients.clone()}
+                            on_remove={Some(move |e|
                                 set_selected_foods.update(|sf| {
                                     (*sf).remove(i);
                                 })
-                            }
+                            )}
                         />
                     }
                 })
