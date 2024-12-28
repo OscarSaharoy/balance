@@ -65,7 +65,7 @@ fn FoodSearch(
                 <input
                     on:input:target=move |e| set_search.set(e.target().value())
                     prop:value={search}
-                    placeholder="eg. Bread, Brazil Nuts, Strawberry Milkshake"
+                    placeholder="+ Search foods"
                     style="font-size: 1rem;"
                 />
                 { move || {
