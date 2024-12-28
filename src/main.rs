@@ -32,11 +32,12 @@ fn Match(
     let (highest_nutrient, _) = get_highest_and_lowest_nutrients(nutrients, food.nutrients.clone());
     view! {
         <div
-            style="padding: 0.5rem 0.6rem 0.5rem 1rem; border: 1px solid var(--fg); border-radius: 2rem; display: grid; grid-template-columns: auto max-content max-content; gap: 0.25rem; align-items: center;"
+            style="padding: 0.5rem 0.6rem 0.5rem 1rem; border: 1px solid var(--fg); border-radius: 2rem; display: grid; grid-template-columns: max-content auto max-content max-content; gap: 0.25rem; align-items: center;"
             style:background=if show_x { "var(--bg2)" } else { "unset" }
         >
-            <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"> { food.emoji } " " { food.display_name } </p>
-            <p style="font-weight: bold; font-size: 0.8rem;"> { highest_nutrient.display_name } </p>
+            <p style="transform: scale(1.2); margin-right: 0.32rem;"> { food.emoji } </p>
+            <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"> { food.display_name } </p>
+            <p style="font-weight: bold; font-size: 0.75rem;"> { highest_nutrient.display_name } </p>
             <button
                 on:click:target={move |e| if let Some(ref mut f) = on_remove { f(e); }}
                 style="padding: 0;"
