@@ -99,7 +99,6 @@ fn FoodReport(
             }
             match data.read().as_deref() {
                 Some(Ok((nutrients,foods))) => {
-                    leptos::logging::log!("{foods:?}");
                     let nutrients_sum = sum_nutrients(nutrients.clone(), selected_foods.get());                   
                     let recommended_foods = recommend_foods(
                         nutrients.clone(),
