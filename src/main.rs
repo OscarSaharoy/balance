@@ -209,7 +209,7 @@ fn Intro() -> impl IntoView {
 fn App() -> impl IntoView {
     view! {
         <div id="leptos-root" style="min-width: 100vw; min-height: 100vh; padding: 2rem; display: grid; place-items: center; grid-template-rows: auto max-content;">
-            <main style="width: 100%; max-width: 40rem; display: grid; gap: 1rem;">
+            <main style="width: 100%; max-width: 40rem; display: grid; gap: 0.8rem;">
                 <Intro />
                 <Foods />
             </main>
