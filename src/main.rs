@@ -190,7 +190,16 @@ fn App() -> impl IntoView {
                 <a href="https://github.com/OscarSaharoy/balance" style="display: grid;" target="_blank" rel="noopener noreferrer">
                     <img src={get_url("/assets/github.svg".to_string())} style="height: 1.5rem;" class="invert" />
                 </a>
-                <p style="font-size: 0.8rem;"> "Made by Oscar Saharoy. Don't rely on this for good nutrition advice!" </p>
+                <div style="line-height: 1.27; font-size: 0.75rem;">
+                    <a
+                        target="_blank"
+                        style="color: var(--fg);"
+                        href="https://www.nhs.uk/conditions/vitamins-and-minerals/"
+                    >
+                        "🔗 NHS guide to vitamins and minerals"
+                    </a>
+                    <p> "Made by Oscar Saharoy. Don't rely on this for good nutrition advice!" </p>
+                </div>
             </footer>
         </div>
     }
