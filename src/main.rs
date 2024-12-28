@@ -35,6 +35,8 @@ fn get_response(
 
 use leptos::prelude::*;
 use leptos::web_sys;
+use leptos::ev::{Targeted, MouseEvent};
+use crate::web_sys::HtmlButtonElement;
 
 mod nutrition;
 use nutrition::{Food, Nutrient, get_foods, lookup_food, sum_nutrients, recommend_foods, get_highest_and_lowest_nutrients};
@@ -55,18 +57,26 @@ async fn get_data() -> Result<Vec<Food>> {
 }
 
 #[component]
-fn Match(food: Food) -> impl IntoView {
+fn Match(
+    food: Food,
+    on_remove: impl FnMut(Targeted<MouseEvent, HtmlButtonElement>) -> () + 'static,
+) -> impl IntoView {
+    let name = food.display_name.clone();
     view! {
         <div style="padding: 0.5rem 0.6rem 0.5rem 1rem; background: var(--bg2); border: 1px solid var(--fg); border-radius: 2rem; display: grid; grid-template-columns: auto max-content; gap: 0.25rem;">
-            <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"> { food.display_name } </p>
-            <img src={get_url("/assets/x.svg".to_string())} style="height: 1.5rem;" class="invert" />
+            <p style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"> { food.emoji } " " { food.display_name } </p>
+            <button
+                on:click:target={on_remove}
+                style="padding: 0;"
+            >
+                <img src={get_url("/assets/x.svg".to_string())} style="height: 1.5rem;" class="invert" />
+            </button>
         </div>
     }
 }
 
 #[component]
 fn FoodSearch(
-    selected_foods: ReadSignal<Vec<Food>>,
     set_selected_foods: WriteSignal<Vec<Food>>,
     data: LocalResource<Result<Vec<Food>>>,
 ) -> impl IntoView {
@@ -76,24 +86,33 @@ fn FoodSearch(
             <div class="search-container">
                 <input
                     on:input:target=move |e| set_search.set(e.target().value())
+                    prop:value={search}
                     placeholder="eg. Bread, Brazil Nuts, Strawberry Milkshake"
                     style="font-size: 1rem;"
                 />
                 { move || {
-                    data.with(|value| match value.as_deref() {
-                        Some(Ok(foods)) => 
+                    match data.read().as_deref() {
+                        Some(Ok(foods)) =>
                             lookup_food(foods, search.get())
                                 .iter()
-                                .map(|f| view! { 
-                                    <button> 
-                                        { f.display_name.to_string() }
-                                    </button> 
-                                }.into_any())
+                                .map(|f| {
+                                    let food = (*f).clone();
+                                    view! {
+                                        <button
+                                            on:click:target=move |e| {
+                                                let food = food.clone();
+                                                set_selected_foods.update(move |sf| sf.push(food));
+                                                set_search.set("".to_string());
+                                            }
+                                        >
+                                            { f.display_name.to_string() }
+                                        </button>
+                                    }.into_any()
+                                })
                                 .collect::<Vec<_>>(),
-                        _ => 
+                        _ =>
                             vec![view!{<p></p>}.into_any()],
-
-                    })
+                    }
                 }}
             </div>
         </div>
@@ -106,11 +125,30 @@ fn Foods() -> impl IntoView {
     let data = LocalResource::new(move || get_data());
 
     view! {
+        { move || {
+            selected_foods
+                .read()
+                .iter()
+                .enumerate()
+                .map(|(i,f)| {
+                    let food = f.clone();
+                    view! {
+                        <Match
+                            food={food}
+                            on_remove={move |e|
+                                set_selected_foods.update(|sf| {
+                                    (*sf).remove(i);
+                                })
+                            }
+                        />
+                    }
+                })
+                .collect::<Vec<_>>()
+        }}
         <FoodSearch
-            selected_foods={selected_foods}
             set_selected_foods={set_selected_foods}
             data={data}
-            />
+        />
     }
 }
 

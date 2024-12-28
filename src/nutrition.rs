@@ -14,7 +14,7 @@ pub struct Nutrient {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Food {
     pub name: String,
     pub display_name: String,
