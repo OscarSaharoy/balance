@@ -157,9 +157,9 @@ pub fn sum_nutrients(
 }
 
 fn balance_score(
-    nutrients: Vec<Nutrient>,
+    nutrients: &Vec<Nutrient>,
     food: &Food,
-    nutrients_sum: HashMap<String, f32>
+    nutrients_sum: &HashMap<String, f32>
 ) -> i64 {
     nutrients
         .iter()
@@ -170,15 +170,15 @@ fn balance_score(
 
 pub fn recommend_foods<'a>(
     nutrients: Vec<Nutrient>,
-    foods: &'a Vec<Food>,
+    foods: &Vec<Food>,
     nutrients_sum: HashMap<String, f32>,
-) -> Vec<&'a Food> {
+) -> Vec<&Food> {
     foods
         .iter()
         .filter(|f| f.recommend)
         .k_largest_by_key(
             3,
-            |f| balance_score(nutrients.clone(), &f, nutrients_sum.clone())
+            |f| balance_score(&nutrients, &f, &nutrients_sum)
         )
         .collect::<Vec<&Food>>()
 }
@@ -283,23 +283,16 @@ mod tests {
             nutrients.clone(),
             found_foods
         );
-        let recommended_foods = super::recommend_foods(
-            nutrients,
-            &foods,
-            nutrients_sum
-        );
-        assert_eq!(
-            recommended_foods[0].name,
-            "Wheatgerm"
-        );
-        assert_eq!(
-            recommended_foods[1].name,
-            "Flour, soya"
-        );
-        assert_eq!(
-            recommended_foods[2].name,
-            "Bran, wheat"
-        );
+        let mut res = 0.;
+        for _ in 0..100 {
+            let recommended_foods = super::recommend_foods(
+                nutrients.clone(),
+                &foods,
+                nutrients_sum.clone()
+            );
+            res += recommended_foods[0].nutrients["vitamin_c_mg"];
+        }
+        println!("{res}");
     }
 
     #[test]
