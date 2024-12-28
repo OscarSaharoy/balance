@@ -1,38 +1,3 @@
-/*
-fn get_response(
-    selected_foods: Vec<&Food>,
-    nutrients: &Vec<Nutrient>,
-    foods: &Vec<Food>,
-) -> String {
-    let nutrients_sum = sum_nutrients(
-        &nutrients,
-        &selected_foods,
-    );
-    let (highest_nutrient, lowest_nutrient) =
-        get_highest_and_lowest_nutrients(
-            &nutrients, &nutrients_sum
-        );
-    let recommended_foods = recommend_foods(
-        &nutrients,
-        &foods,
-        &nutrients_sum
-    );
-    let recommended = recommended_foods
-        .iter()
-        .map(|f| format!(
-            "{} {} - high in {}",
-            f.emoji.to_string(),
-            f.display_name.to_string(),
-            get_highest_and_lowest_nutrients(&nutrients, &f.nutrients).0.display_name)
-        )
-        .collect::<Vec<String>>();
-    format!(
-        "Sounds delicious, you have had a lot of {} 😋 Try eating some of these foods to balance your diet:\n\n{}\n{}\n{}",
-        highest_nutrient.display_name, recommended[0], recommended[1], recommended[2]
-    )
-}
-*/
-
 use leptos::prelude::*;
 use leptos::web_sys;
 use leptos::ev::{Targeted, MouseEvent};
@@ -126,11 +91,36 @@ fn FoodReport(
 ) -> impl IntoView {
     view! {
         { move || {
+            if selected_foods.read().len() == 0 {
+                return view!{<p></p>}.into_any();
+            }
             match data.read().as_deref() {
                 Some(Ok((nutrients,foods))) => {
                     leptos::logging::log!("{foods:?}");
-                    //let sum = sum_nutrients(nutrients, selected_foods.get());                   
-                    view! { <p> test </p> }.into_any()
+                    let nutrients_sum = sum_nutrients(nutrients.clone(), selected_foods.get());                   
+                    let recommended_foods = recommend_foods(
+                        nutrients.clone(),
+                        &foods,
+                        nutrients_sum.clone(),
+                    );
+                    let (highest_nutrient, lowest_nutrient) =
+                        get_highest_and_lowest_nutrients(
+                            nutrients.clone(), nutrients_sum.clone(),
+                        );
+                    let recommended = recommended_foods
+                        .iter()
+                        .map(|f| format!(
+                            "{} {} - high in {}",
+                            f.emoji.to_string(),
+                            f.display_name.to_string(),
+                            get_highest_and_lowest_nutrients(nutrients.clone(), f.nutrients.clone()).0.display_name)
+                        )
+                        .collect::<Vec<String>>();
+                    view!{ <p style="white-space: pre-wrap;"> {
+                        format!(
+                            "Sounds delicious, you have had a lot of {} 😋 Try eating some of these foods to balance your diet:\n\n{}\n{}\n{}",
+                            highest_nutrient.display_name, recommended[0], recommended[1], recommended[2]
+                        ) } </p> }.into_any()
                 },
                 _ =>
                     view!{<p></p>}.into_any(),
