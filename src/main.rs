@@ -47,13 +47,13 @@ fn get_url(path: String) -> String {
     format!("{href}{path}")
 }
 
-async fn get_data() -> Result<Vec<Food>> {
+async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
     let res = reqwasm::http::Request::get(
         &get_url("assets/cofid.csv".to_string())
     ).send().await?;
     let text = res.text().await?;
-    let (_, foods) = get_foods(text);
-    Ok(foods)
+    let (nutrients, foods) = get_foods(text);
+    Ok((nutrients, foods))
 }
 
 #[component]
@@ -78,7 +78,7 @@ fn Match(
 #[component]
 fn FoodSearch(
     set_selected_foods: WriteSignal<Vec<Food>>,
-    data: LocalResource<Result<Vec<Food>>>,
+    data: LocalResource<Result<(Vec<Nutrient>, Vec<Food>)>>,
 ) -> impl IntoView {
     let (search, set_search) = signal("".to_string());
     view! {
@@ -92,7 +92,7 @@ fn FoodSearch(
                 />
                 { move || {
                     match data.read().as_deref() {
-                        Some(Ok(foods)) =>
+                        Some(Ok((nutrients,foods))) =>
                             lookup_food(foods, search.get())
                                 .iter()
                                 .map(|f| {
@@ -116,6 +116,26 @@ fn FoodSearch(
                 }}
             </div>
         </div>
+    }
+}
+
+#[component]
+fn FoodReport(
+    selected_foods: ReadSignal<Vec<Food>>,
+    data: LocalResource<Result<(Vec<Nutrient>, Vec<Food>)>>,
+) -> impl IntoView {
+    view! {
+        { move || {
+            match data.read().as_deref() {
+                Some(Ok((nutrients,foods))) => {
+                    leptos::logging::log!("{foods:?}");
+                    //let sum = sum_nutrients(nutrients, selected_foods.get());                   
+                    view! { <p> test </p> }.into_any()
+                },
+                _ =>
+                    view!{<p></p>}.into_any(),
+            }
+        }}
     }
 }
 
@@ -147,6 +167,10 @@ fn Foods() -> impl IntoView {
         }}
         <FoodSearch
             set_selected_foods={set_selected_foods}
+            data={data}
+        />
+        <FoodReport
+            selected_foods={selected_foods}
             data={data}
         />
     }

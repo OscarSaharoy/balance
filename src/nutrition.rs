@@ -170,7 +170,7 @@ fn balance_score(
 pub fn recommend_foods<'a>(
     nutrients: &Vec<Nutrient>,
     foods: &'a Vec<Food>,
-    nutrients_sum: &HashMap<String, f32>,
+    nutrients_sum: HashMap<String, f32>,
 ) -> Vec<&'a Food> {
     foods
         .iter()
@@ -282,7 +282,7 @@ mod tests {
         let recommended_foods = super::recommend_foods(
             &nutrients,
             &foods,
-            &nutrients_sum
+            nutrients_sum
         );
         assert_eq!(
             recommended_foods[0].name,
