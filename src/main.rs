@@ -68,10 +68,10 @@ fn FoodModal(
     if open {
         view! {
             <div
-                style="position: fixed; display: grid; place-items: center; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; min-height: 100vh; background: #0004; z-index: 2; padding: 2rem; overflow: scroll;"
+                style="position: fixed; display: grid; place-items: center; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; min-height: 100vh; background: #0004; z-index: 2; padding: 2rem 1rem; overflow: scroll;"
             >
                 <div
-                    style="display: grid; padding: 2rem; background: var(--bg); border: 1px solid var(--fg); border-radius: 2rem; width: 100%; max-width: 38rem; gap: 0.25rem;"
+                    style="display: grid; padding: 1.5rem; background: var(--bg); border: 1px solid var(--fg); border-radius: 2rem; width: 100%; max-width: 38rem; gap: 0.25rem;"
                 >
                     <div style="display: flex;">
                         <h1 style="flex-grow: 1;">
