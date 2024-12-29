@@ -334,8 +334,16 @@ fn App() -> impl IntoView {
                 <Intro />
                 <Foods />
             </main>
-            <footer style="display: grid; grid-auto-flow: column; align-items: center; gap: .7rem; justify-self: start; align-self: end;">
-                <a href="https://github.com/OscarSaharoy/balance" style="display: grid;" target="_blank" rel="noopener noreferrer">
+            <footer
+                style=
+                    "display: grid; grid-auto-flow: column; align-items: center; gap: .7rem; justify-self: start; align-self: end;"
+                >
+                <a
+                    href="https://github.com/OscarSaharoy/balance"
+                    style="display: grid; align-self: end; margin-bottom: 0.2rem;"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
                     <img src={get_url("/assets/github.svg".to_string())} style="height: 1.5rem;" class="invert" />
                 </a>
                 <div style="line-height: 1.27; font-size: 0.75rem;">
