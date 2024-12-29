@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use leptos::prelude::*;
 use leptos::web_sys;
 
@@ -22,9 +23,9 @@ async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
 #[component]
 fn NutrientRow(
     nutrient: Nutrient,
-    food: Food,
+    nutrient_value: f32,
 ) -> impl IntoView {
-    let percentage = 100. * food.nutrients[&nutrient.name] / nutrient.recommended_intake;
+    let percentage = 100. * nutrient_value / nutrient.recommended_intake;
     let color = if nutrient.recommended_intake > 0.1 && percentage >= 20. {
         "#0d0"
     } else {
@@ -36,7 +37,7 @@ fn NutrientRow(
         />
         <p style:color={color}> { nutrient.display_name.clone() } </p>
         <p style="text-align: right;">
-            { format_float(food.nutrients[&nutrient.name]) }{ nutrient.units.clone() }
+            { format_float(nutrient_value) }{ nutrient.units.clone() }
         </p>
         {
             if nutrient.recommended_intake > 0.1 {
@@ -59,11 +60,40 @@ fn NutrientRow(
 }
 
 #[component]
-fn FoodModal(
-    food: Food,
+fn NutrientTable(
     nutrients: Vec<Nutrient>,
+    nutrient_values: HashMap<String, f32>,
+) -> impl IntoView {
+    view! {
+        <div
+            style="display: grid; grid-template-columns: 1fr max-content max-content; column-gap: 0.5rem; align-items: center; font-size: min(1rem, calc((100vw - 5rem) / 22));"
+        >
+            <p style="font-weight: bold;">
+                Nutrient
+            </p>
+            <p style="text-align: right; font-weight: bold;">
+                Content
+            </p>
+            <p style="text-align: right; font-weight: bold;">
+                RI
+            </p>
+            { nutrients
+                .iter()
+                .map(|n| view! {
+                    <NutrientRow nutrient=n.clone() nutrient_value=nutrient_values[&n.name] />
+                })
+                .collect::<Vec<_>>()
+            }
+        </div>
+    }
+}
+
+#[component]
+fn Modal(
+    title: String,
     open: bool,
     mut close: impl FnMut() -> () + 'static,
+    children: Children,
 ) -> impl IntoView {
     if open {
         view! {
@@ -75,7 +105,7 @@ fn FoodModal(
                 >
                     <div style="display: flex;">
                         <h1 style="flex-grow: 1;">
-                            { food.emoji.clone() }" "{ food.display_name.clone() }
+                            { title }
                         </h1>
                         <button
                             on:click:target=move |_| close()
@@ -88,31 +118,7 @@ fn FoodModal(
                             />
                         </button>
                     </div>
-                    <h3><em> { food.name.clone() } </em></h3>
-                    <p style="margin: 1rem 0">
-                        "Here is the nutritional composition for 100 grams of "{ food.display_name.clone() }:
-                    </p>
-
-                    <div
-                        style="display: grid; grid-template-columns: 1fr max-content max-content; column-gap: 0.5rem; align-items: center; font-size: min(1rem, calc((100vw - 5rem) / 22));"
-                    >
-                        <p style="font-weight: bold;">
-                            Nutrient
-                        </p>
-                        <p style="text-align: right; font-weight: bold;">
-                            Content
-                        </p>
-                        <p style="text-align: right; font-weight: bold;">
-                            RI
-                        </p>
-                        { nutrients
-                            .iter()
-                            .map(|n| view! {
-                                <NutrientRow nutrient={n.clone()} food=food.clone() />
-                            })
-                            .collect::<Vec<_>>()
-                        }
-                    </div>
+                    { children() }
                 </div>
             </div>
         }.into_any()
@@ -172,12 +178,17 @@ fn Match(
                 let food = food.clone();
                 let nutrients = nutrients.clone();
                 view!{
-                    <FoodModal
-                        food={food}
-                        nutrients={nutrients}
+                    <Modal
+                        title={ format!("{} {}", food.emoji.clone(), food.display_name.clone()) }
                         open={modal_open.get()}
                         close={move || set_modal_open.set(false)}
-                    />
+                    >
+                        <h3><em> { food.name.clone() } </em></h3>
+                        <p style="margin: 1rem 0">
+                            "Here is the nutritional composition for 100 grams of "{ food.display_name.clone() }:
+                        </p>
+                        <NutrientTable nutrients={nutrients} nutrient_values={food.nutrients} />
+                    </Modal>
                 }
             } }
         </div>
