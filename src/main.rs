@@ -94,7 +94,7 @@ fn FoodModal(
                     </p>
 
                     <div
-                        style="display: grid; grid-template-columns: 1fr max-content max-content; column-gap: 0.5rem; align-items: center;"
+                        style="display: grid; grid-template-columns: 1fr max-content max-content; column-gap: 0.5rem; align-items: center; font-size: min(1rem, calc((100vw - 5rem) / 22));"
                     >
                         <p style="font-weight: bold;">
                             Nutrient
