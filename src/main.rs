@@ -254,7 +254,7 @@ fn FoodReport(
                             nutrients.clone(), nutrients_sum.clone(),
                         );
                     view! {
-                        <p style="white-space: pre-wrap;">
+                        <p style="white-space: pre-wrap; margin-top: 0.75rem;">
                             { format!(
                                 "Sounds delicious, you have had a lot of {} 😋 Try eating some of these foods to balance your diet:",
                                 highest_nutrient.display_name
