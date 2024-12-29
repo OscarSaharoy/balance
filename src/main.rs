@@ -247,6 +247,7 @@ fn FoodReport(
     selected_foods: ReadSignal<Vec<Food>>,
     data: LocalResource<Result<(Vec<Nutrient>, Vec<Food>)>>,
 ) -> impl IntoView {
+    let (modal_open, set_modal_open) = signal(false);
     view! {
         { move || {
             if selected_foods.read().len() == 0 {
@@ -264,12 +265,20 @@ fn FoodReport(
                         get_highest_and_lowest_nutrients(
                             nutrients.clone(), nutrients_sum.clone(),
                         );
+                    let nutrients1 = nutrients.clone();
+                    let nutrients_sum1 = nutrients_sum.clone();
                     view! {
-                        <p style="white-space: pre-wrap; margin-top: 0.75rem;">
+                        <button
+                            style="white-space: pre-wrap; margin: -1rem; margin-top: 0rem; font-size: 1rem;"
+                            on:click:target=move |e| set_modal_open.set(true)
+                        >
                             { format!(
-                                "Sounds delicious, you have had a lot of {} 😋 Try eating some of these foods to balance your diet:",
+                                "Sounds delicious, you have had a lot of {} 😋 Click here to view your overall nutrient breakdown for today.",
                                 highest_nutrient.display_name
                             ) }
+                        </button>
+                        <p>
+                            Try eating some of these foods to balance your diet:
                         </p>
                         {
                             recommended_foods
@@ -286,6 +295,18 @@ fn FoodReport(
                                 })
                                 .collect::<Vec<_>>()
                         }
+                        <Modal
+                            title="Nutrition Breakdown".to_string()
+                            open={modal_open.get()}
+                            close={move || set_modal_open.set(false)}
+                        >
+                            <div style="display: grid; gap: 0.75rem;">
+                                <p> This shows the combined breakdown of the nutrients you 
+                                    have eaten today, assuming you ate around 100 grams of
+                                    each selected food. </p>
+                                <NutrientTable nutrients={nutrients1} nutrient_values={nutrients_sum1} />
+                            </div>
+                        </Modal>
                     }.into_any()
                 },
                 _ =>
