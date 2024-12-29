@@ -86,6 +86,7 @@ dependencies = [
  "itertools",
  "leptos",
  "leptos-use",
+ "regex",
  "reqwasm",
 ]
 

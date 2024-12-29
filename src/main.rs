@@ -2,7 +2,7 @@ use leptos::prelude::*;
 use leptos::web_sys;
 
 mod nutrition;
-use nutrition::{Food, Nutrient, get_foods, lookup_food, sum_nutrients, recommend_foods, get_highest_and_lowest_nutrients};
+use nutrition::{Food, Nutrient, get_foods, lookup_food, sum_nutrients, recommend_foods, get_highest_and_lowest_nutrients, format_float};
 
 fn get_url(path: String) -> String {
     let window = web_sys::window().expect("Missing Window");
@@ -36,7 +36,7 @@ fn NutrientRow(
         />
         <p style:color={color}> { nutrient.display_name.clone() } </p>
         <p style="text-align: right;">
-            { food.nutrients[&nutrient.name] }{ nutrient.units.clone() }
+            { format_float(food.nutrients[&nutrient.name]) }{ nutrient.units.clone() }
         </p>
         {
             if nutrient.recommended_intake > 0.1 {

@@ -2,7 +2,18 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use fuzzy_matcher::FuzzyMatcher;
 use fuzzy_matcher::skim::SkimMatcherV2;
+use regex::Regex;
 
+
+pub fn format_float(x: f32) -> String {
+    let s = x.to_string();
+    let re = Regex::new(r"\.\d{3,}").expect("valid regex");
+    if re.is_match(&s) {
+        format!("{x:.2}")
+    } else {
+        s
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Nutrient {
@@ -211,6 +222,17 @@ mod tests {
             "./assets/cofid.csv"
         ).expect("cofid.csv is error free");
         super::get_foods(csv)
+    }
+
+    #[test]
+    fn format_floats() -> () {
+        assert_eq!(super::format_float(100.), "100");
+        assert_eq!(super::format_float(1.), "1");
+        assert_eq!(super::format_float(1.00), "1");
+        assert_eq!(super::format_float(1.01), "1.01");
+        assert_eq!(super::format_float(0.11), "0.11");
+        assert_eq!(super::format_float(0.112), "0.11");
+        assert_eq!(super::format_float(0.456), "0.46");
     }
 
     #[test]
