@@ -296,7 +296,7 @@ fn FoodReport(
                                 .collect::<Vec<_>>()
                         }
                         <Modal
-                            title="Nutrition Breakdown".to_string()
+                            title="⚖️  Nutrition Breakdown".to_string()
                             open={modal_open.get()}
                             close={move || set_modal_open.set(false)}
                         >
