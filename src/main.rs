@@ -70,23 +70,31 @@ fn FoodModal(
                         </p>
                         { nutrients
                             .iter()
-                            .map(|n|
+                            .map(|n| {
+                                let percentage = 100. * food.nutrients[&n.name] / n.recommended_intake;
+                                let color = if (
+                                    n.recommended_intake > 0.1
+                                    && percentage >= 20.
+                                ) {
+                                    "#0d0"
+                                } else {
+                                    "unset"
+                                };
                                 view! {
                                     <tr
                                         style="grid-column: 1/4; border: none; border-bottom: 1px solid var(--fg); margin: 0.1rem 0; opacity: 0.7;"
                                     />
-                                    <p> { n.display_name.clone() } </p>
+                                    <p style:color={color}> { n.display_name.clone() } </p>
                                     <p style="text-align: right;">
                                         { food.nutrients[&n.name] }{ n.units.clone() }
                                     </p>
                                     {
                                         if n.recommended_intake > 0.1 {
-                                            let percentage = 100. * food.nutrients[&n.name] / n.recommended_intake;
                                             view! {
                                                 <p style="text-align: right;">
                                                     { n.recommended_intake }{ n.units.clone() }
                                                     " | "
-                                                    <span style:color={ if percentage >= 20. { "#0d0" } else { "unset" } } >
+                                                    <span style:color={color} >
                                                         { format!( "{:.0}", percentage ) }"%"
                                                     </span>
                                                 </p>
@@ -98,7 +106,7 @@ fn FoodModal(
                                         }
                                     }
                                 }
-                            )
+                            })
                             .collect::<Vec<_>>()
                         }
                     </div>
