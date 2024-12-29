@@ -168,7 +168,7 @@ fn balance_score(
         .sum()
 }
 
-pub fn recommend_foods<'a>(
+pub fn recommend_foods(
     nutrients: Vec<Nutrient>,
     foods: &Vec<Food>,
     nutrients_sum: HashMap<String, f32>,
@@ -203,8 +203,6 @@ pub fn get_highest_and_lowest_nutrients(
             .clone(),
     )
 }
-
-fn main() -> () {}
 
 #[cfg(test)]
 mod tests {

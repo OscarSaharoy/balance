@@ -1,7 +1,5 @@
 use leptos::prelude::*;
 use leptos::web_sys;
-use leptos::ev::{Targeted, MouseEvent};
-use crate::web_sys::HtmlButtonElement;
 
 mod nutrition;
 use nutrition::{Food, Nutrient, get_foods, lookup_food, sum_nutrients, recommend_foods, get_highest_and_lowest_nutrients};
@@ -22,6 +20,45 @@ async fn get_data() -> Result<(Vec<Nutrient>, Vec<Food>)> {
 }
 
 #[component]
+fn NutrientRow(
+    nutrient: Nutrient,
+    food: Food,
+) -> impl IntoView {
+    let percentage = 100. * food.nutrients[&nutrient.name] / nutrient.recommended_intake;
+    let color = if nutrient.recommended_intake > 0.1 && percentage >= 20. {
+        "#0d0"
+    } else {
+        "unset"
+    };
+    view! {
+        <tr
+            style="grid-column: 1/4; border: none; border-bottom: 1px solid var(--fg); margin: 0.1rem 0; opacity: 0.7;"
+        />
+        <p style:color={color}> { nutrient.display_name.clone() } </p>
+        <p style="text-align: right;">
+            { food.nutrients[&nutrient.name] }{ nutrient.units.clone() }
+        </p>
+        {
+            if nutrient.recommended_intake > 0.1 {
+                view! {
+                    <p style="text-align: right;">
+                        { nutrient.recommended_intake }{ nutrient.units.clone() }
+                        " | "
+                        <span style:color={color} >
+                            { format!( "{:.0}", percentage ) }"%"
+                        </span>
+                    </p>
+                }.into_any()
+            } else {
+                view! {
+                    <p style="text-align: right;"> - </p>
+                }.into_any()
+            }
+        }
+    }
+}
+
+#[component]
 fn FoodModal(
     food: Food,
     nutrients: Vec<Nutrient>,
@@ -38,10 +75,10 @@ fn FoodModal(
                 >
                     <div style="display: flex;">
                         <h1 style="flex-grow: 1;">
-                            { food.emoji }" "{ food.display_name.clone() }
+                            { food.emoji.clone() }" "{ food.display_name.clone() }
                         </h1>
                         <button
-                            on:click:target=move |e| close()
+                            on:click:target=move |_| close()
                             style="padding: 0; align-self: start; margin-top: 0.8rem;"
                         >
                             <img
@@ -51,7 +88,7 @@ fn FoodModal(
                             />
                         </button>
                     </div>
-                    <h3><em> { food.name } </em></h3>
+                    <h3><em> { food.name.clone() } </em></h3>
                     <p style="margin: 1rem 0">
                         "Here is the nutritional composition for 100 grams of "{ food.display_name.clone() }:
                     </p>
@@ -70,42 +107,8 @@ fn FoodModal(
                         </p>
                         { nutrients
                             .iter()
-                            .map(|n| {
-                                let percentage = 100. * food.nutrients[&n.name] / n.recommended_intake;
-                                let color = if (
-                                    n.recommended_intake > 0.1
-                                    && percentage >= 20.
-                                ) {
-                                    "#0d0"
-                                } else {
-                                    "unset"
-                                };
-                                view! {
-                                    <tr
-                                        style="grid-column: 1/4; border: none; border-bottom: 1px solid var(--fg); margin: 0.1rem 0; opacity: 0.7;"
-                                    />
-                                    <p style:color={color}> { n.display_name.clone() } </p>
-                                    <p style="text-align: right;">
-                                        { food.nutrients[&n.name] }{ n.units.clone() }
-                                    </p>
-                                    {
-                                        if n.recommended_intake > 0.1 {
-                                            view! {
-                                                <p style="text-align: right;">
-                                                    { n.recommended_intake }{ n.units.clone() }
-                                                    " | "
-                                                    <span style:color={color} >
-                                                        { format!( "{:.0}", percentage ) }"%"
-                                                    </span>
-                                                </p>
-                                            }.into_any()
-                                        } else {
-                                            view! {
-                                                <p style="text-align: right;"> - </p>
-                                            }.into_any()
-                                        }
-                                    }
-                                }
+                            .map(|n| view! {
+                                <NutrientRow nutrient={n.clone()} food=food.clone() />
                             })
                             .collect::<Vec<_>>()
                         }
@@ -125,7 +128,6 @@ fn Match(
     mut on_remove: Option<impl FnMut() -> () + 'static>,
 ) -> impl IntoView {
     let (modal_open, set_modal_open) = signal(false);
-    let name = food.display_name.clone();
     let show_x = on_remove.is_some();
     let (highest_nutrient, _) = get_highest_and_lowest_nutrients(nutrients.clone(), food.nutrients.clone());
     view! {
@@ -139,7 +141,7 @@ fn Match(
             <button
                 style="display: grid; align-items: center; grid-template-columns: auto max-content; justify-content: left; gap: 0.25rem; cursor: pointer; padding: 0.5rem 0;"
                 class="hover-line"
-                on:click:target=move |e| set_modal_open.set(true)
+                on:click:target=move |_| set_modal_open.set(true)
             >
                 <p
                     style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .9rem;"
@@ -156,7 +158,7 @@ fn Match(
                 "📊 "{ highest_nutrient.display_name }
             </p>
             <button
-                on:click:target={move |e| if let Some(ref mut f) = on_remove { f(); }}
+                on:click:target={move |_| if let Some(ref mut f) = on_remove { f(); }}
                 style="padding: 0;"
                 style:display=move || if show_x { "unset" } else { "none" }
             >
@@ -202,14 +204,14 @@ fn FoodSearch(
                         return vec![view!{<p></p>}.into_any()];
                     }
                     match data.read().as_deref() {
-                        Some(Ok((nutrients,foods))) =>
+                        Some(Ok((_, foods))) =>
                             lookup_food(foods, search.get())
                                 .iter()
                                 .map(|f| {
                                     let food = (*f).clone();
                                     view! {
                                         <button
-                                            on:click:target=move |e| {
+                                            on:click:target=move |_| {
                                                 let food = food.clone();
                                                 set_selected_foods.update(move |sf| sf.push(food));
                                                 set_search.set("".to_string());
@@ -247,7 +249,7 @@ fn FoodReport(
                         &foods,
                         nutrients_sum.clone(),
                     );
-                    let (highest_nutrient, lowest_nutrient) =
+                    let (highest_nutrient, _) =
                         get_highest_and_lowest_nutrients(
                             nutrients.clone(), nutrients_sum.clone(),
                         );
@@ -283,10 +285,11 @@ fn FoodReport(
 }
 
 #[component]
-fn Foods() -> impl IntoView {
-    let (selected_foods, set_selected_foods) = signal(Vec::<Food>::new());
-    let data = LocalResource::new(move || get_data());
-
+fn SelectedFoods(
+    selected_foods: ReadSignal<Vec<Food>>,
+    set_selected_foods: WriteSignal<Vec<Food>>,
+    data: LocalResource<Result<(Vec<Nutrient>, Vec<Food>)>>,
+) -> impl IntoView {
     view! {
         { move || {
             let nutrients = match data.read().as_deref() {
@@ -313,6 +316,21 @@ fn Foods() -> impl IntoView {
                 })
                 .collect::<Vec<_>>()
         }}
+    }
+}
+
+
+#[component]
+fn Foods() -> impl IntoView {
+    let (selected_foods, set_selected_foods) = signal(Vec::<Food>::new());
+    let data = LocalResource::new(move || get_data());
+
+    view! {
+        <SelectedFoods
+            selected_foods={selected_foods}
+            set_selected_foods={set_selected_foods}
+            data={data}
+        />
         <FoodSearch
             set_selected_foods={set_selected_foods}
             data={data}
@@ -324,7 +342,6 @@ fn Foods() -> impl IntoView {
     }
 }
 
-
 #[component]
 fn Intro() -> impl IntoView {
     view! {
@@ -332,7 +349,6 @@ fn Intro() -> impl IntoView {
         <p> "What have you eaten today?" </p>
     }
 }
-
 
 #[component]
 fn App() -> impl IntoView {
