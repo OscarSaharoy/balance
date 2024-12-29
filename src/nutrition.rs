@@ -2,13 +2,11 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use fuzzy_matcher::FuzzyMatcher;
 use fuzzy_matcher::skim::SkimMatcherV2;
-use regex::Regex;
 
 
 pub fn format_float(x: f32) -> String {
     let s = x.to_string();
-    let re = Regex::new(r"\.\d{3,}").expect("valid regex");
-    if re.is_match(&s) {
+    if s.contains(".") && s.split(".").collect::<Vec<&str>>()[1].len() > 2 {
         format!("{x:.2}")
     } else {
         s

@@ -12,7 +12,6 @@ reqwasm = "0.5.0"
 gloo-timers = { version = "0.3", features = ["futures"] }
 leptos-use = "0.14.0"
 fuzzy-matcher = "*"
-regex="1.11.1"
 
 [[bin]]
 name = "main"
