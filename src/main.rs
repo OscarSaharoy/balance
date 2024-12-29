@@ -201,7 +201,7 @@ fn FoodSearch(
                 />
                 { move || {
                     if search.read().len() == 0 {
-                        return vec![view!{<p></p>}.into_any()];
+                        return vec![view!{}.into_any()];
                     }
                     match data.read().as_deref() {
                         Some(Ok((_, foods))) =>
@@ -223,7 +223,7 @@ fn FoodSearch(
                                 })
                                 .collect::<Vec<_>>(),
                         _ =>
-                            vec![view!{<p></p>}.into_any()],
+                            vec![view!{}.into_any()],
                     }
                 }}
             </div>
@@ -239,7 +239,7 @@ fn FoodReport(
     view! {
         { move || {
             if selected_foods.read().len() == 0 {
-                return view!{<p></p>}.into_any();
+                return view!{}.into_any();
             }
             match data.read().as_deref() {
                 Some(Ok((nutrients,foods))) => {
@@ -278,7 +278,7 @@ fn FoodReport(
                     }.into_any()
                 },
                 _ =>
-                    view!{<p></p>}.into_any(),
+                    view!{}.into_any(),
             }
         }}
     }
@@ -290,12 +290,12 @@ fn SelectedFoods(
     set_selected_foods: WriteSignal<Vec<Food>>,
     data: LocalResource<Result<(Vec<Nutrient>, Vec<Food>)>>,
 ) -> impl IntoView {
+    let nutrients = move || match data.read().as_deref() {
+        Some(Ok((nutrients,_))) => nutrients.clone(),
+        _ => Vec::<Nutrient>::new(),
+    };
     view! {
         { move || {
-            let nutrients = match data.read().as_deref() {
-                Some(Ok((nutrients,_))) => nutrients.clone(),
-                _ => Vec::<Nutrient>::new(),
-            };
             selected_foods
                 .read()
                 .iter()
@@ -305,7 +305,7 @@ fn SelectedFoods(
                     view! {
                         <Match
                             food={food}
-                            nutrients={nutrients.clone()}
+                            nutrients={nutrients()}
                             on_remove={Some(move ||
                                 set_selected_foods.update(|sf| {
                                     (*sf).remove(i);
