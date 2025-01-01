@@ -270,7 +270,7 @@ fn FoodReport(
                     view! {
                         <button
                             style="white-space: pre-wrap; margin: -1rem; margin-top: 0rem; font-size: 1rem;"
-                            on:click:target=move |e| set_modal_open.set(true)
+                            on:click:target=move |_| set_modal_open.set(true)
                         >
                             { format!(
                                 "Sounds delicious, you have had a lot of {} 😋 Click here to view your overall nutrient breakdown for today.",
