@@ -87,20 +87,14 @@
             position: relative;
             background: var(--bg);
         }
-        .search-container p,
-        .search-container button {
-            display: none;
-        }
-        .search-container:focus-within {
+        .search-container:focus-within,
+        .search-container:has(button) {
             padding: 0px;
             border: 1px solid var(--fg);
         }
-        .search-container:focus-within input {
+        .search-container:focus-within input,
+        .search-container:has(button) input {
             border-bottom: none;
-        }
-        .search-container:focus-within p,
-        .search-container:focus-within button {
-            display: grid;
         }
 
         .hover-line:hover {
