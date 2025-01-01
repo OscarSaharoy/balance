@@ -103,7 +103,7 @@ fn Modal(
                 <div
                     style="display: grid; padding: 1.5rem; background: var(--bg); border: 1px solid var(--fg); border-radius: 2rem; width: 100%; max-width: 38rem; gap: 0.25rem;"
                 >
-                    <div style="display: flex;">
+                    <div style="display: flex; gap: 0.75rem;">
                         <h1 style="flex-grow: 1;">
                             { title }
                         </h1>
@@ -275,10 +275,13 @@ fn FoodReport(
                             style="white-space: pre-wrap; margin: -1rem; margin-top: 0rem; font-size: 1rem;"
                             on:click:target=move |_| set_modal_open.set(true)
                         >
-                            { format!(
-                                "Sounds delicious, you have had a lot of {} 😋 Click here to view your overall nutrient breakdown for today.",
+                            <p> { format!(
+                                "Sounds delicious, you have had a lot of {} 😋 ",
                                 highest_nutrient.display_name
                             ) }
+                            <span style="text-decoration: underline;">
+                                Click here
+                            </span>" to view your overall nutrient breakdown for today." </p>
                         </button>
                         <p>
                             Try eating some of these foods to balance your diet:
