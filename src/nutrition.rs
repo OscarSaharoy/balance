@@ -138,7 +138,7 @@ pub fn lookup_food(
     foods
         .iter()
         .k_largest_by_key(
-            5,
+            20,
             |f| matcher
                 .fuzzy_match(&f.display_name, &search)
                 .unwrap_or(0) * 100 - f.display_name.len() as i64

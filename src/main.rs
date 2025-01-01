@@ -210,34 +210,36 @@ fn FoodSearch(
                     placeholder="+ Search foods"
                     style="font-size: 1rem;"
                 />
-                { move || {
-                    if search.read().len() == 0 {
-                        return vec![view!{}.into_any()];
-                    }
-                    match data.read().as_deref() {
-                        Some(Ok((_, foods))) =>
-                            lookup_food(foods, search.get())
-                                .iter()
-                                .map(|f| {
-                                    let food = (*f).clone();
-                                    view! {
-                                        <button
-                                            on:click:target=move |_| {
-                                                let food = food.clone();
-                                                set_selected_foods.update(move |sf| sf.push(food));
-                                                set_search.set("".to_string());
-                                            }
-                                            style="font-size: 0.9rem; white-space: pre;"
-                                        >
-                                            { f.emoji.clone() }"  "{ f.display_name.to_string() }
-                                        </button>
-                                    }.into_any()
-                                })
-                                .collect::<Vec<_>>(),
-                        _ =>
-                            vec![view!{}.into_any()],
-                    }
-                }}
+                <div class="search-options">
+                    { move || {
+                        if search.read().len() == 0 {
+                            return vec![view!{}.into_any()];
+                        }
+                        match data.read().as_deref() {
+                            Some(Ok((_, foods))) =>
+                                lookup_food(foods, search.get())
+                                    .iter()
+                                    .map(|f| {
+                                        let food = (*f).clone();
+                                        view! {
+                                            <button
+                                                on:click:target=move |_| {
+                                                    let food = food.clone();
+                                                    set_selected_foods.update(move |sf| sf.push(food));
+                                                    set_search.set("".to_string());
+                                                }
+                                                style="font-size: 0.9rem; white-space: pre;"
+                                            >
+                                                { f.emoji.clone() }"  "{ f.display_name.to_string() }
+                                            </button>
+                                        }.into_any()
+                                    })
+                                    .collect::<Vec<_>>(),
+                            _ =>
+                                vec![view!{}.into_any()],
+                        }
+                    }}
+                </div>
             </div>
         </div>
     }
