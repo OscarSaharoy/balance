@@ -227,8 +227,9 @@ fn FoodSearch(
                                                 set_selected_foods.update(move |sf| sf.push(food));
                                                 set_search.set("".to_string());
                                             }
+                                            style="font-size: 0.9rem; white-space: pre;"
                                         >
-                                            { f.display_name.to_string() }
+                                            { f.emoji.clone() }"  "{ f.display_name.to_string() }
                                         </button>
                                     }.into_any()
                                 })
@@ -301,7 +302,8 @@ fn FoodReport(
                             close={move || set_modal_open.set(false)}
                         >
                             <div style="display: grid; gap: 0.75rem;">
-                                <p> This shows the combined breakdown of the nutrients you 
+                                <p style="margin: 1rem 0"> 
+                                    This shows the combined breakdown of the nutrients you 
                                     have eaten today, assuming you ate around 100 grams of
                                     each selected food. </p>
                                 <NutrientTable nutrients={nutrients1} nutrient_values={nutrients_sum1} />
