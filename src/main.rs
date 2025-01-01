@@ -245,6 +245,19 @@ fn FoodSearch(
     }
 }
 
+fn get_tasty_message(selected_foods: Vec<Food>) -> String {
+    let seed = selected_foods
+        .iter()
+        .fold(0, |a, f| a + f.name.len() * f.nutrients["water_g"] as usize);
+    [
+        "Sounds delicious",
+        "Sounds delectable",
+        "Sounds tasty",
+        "Delicious and nutritious",
+        "Those are some of my favourite foods",
+    ][seed % 5].to_string()
+}
+
 #[component]
 fn FoodReport(
     selected_foods: ReadSignal<Vec<Food>>,
@@ -272,16 +285,17 @@ fn FoodReport(
                     let nutrients_sum1 = nutrients_sum.clone();
                     view! {
                         <button
-                            style="white-space: pre-wrap; margin: -1rem; margin-top: 0rem; font-size: 1rem;"
+                            style="white-space: pre-wrap; margin: 0 -1rem -0.75rem -1rem; font-size: 1rem;"
                             on:click:target=move |_| set_modal_open.set(true)
                         >
-                            <p> { format!(
-                                "Sounds delicious, you have had a lot of {} 😋 ",
-                                highest_nutrient.display_name
-                            ) }
-                            <span style="text-decoration: underline;">
-                                Click here
-                            </span>" to view your overall nutrient breakdown for today." </p>
+                            <p> 
+                                { get_tasty_message(selected_foods.get()) }
+                                "! You have had a lot of "
+                                { highest_nutrient.display_name }" 😋 "
+                                <span style="text-decoration: underline;">
+                                    Click here
+                                </span>" to view your overall nutrient breakdown for today."
+                            </p>
                         </button>
                         <p>
                             Try eating some of these foods to balance your diet:
